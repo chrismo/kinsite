@@ -204,16 +204,18 @@ const sortedIndex = () => {
 }
 const given = li => li.match(/Thistle, (\w+)</)[1]
 
-test('indexPage lists people A-Z by default, with birth years and a JS-only sort button', () => {
+test('indexPage lists people A-Z by default, with birth years and a JS-only sort-by menu', () => {
   const html = sortedIndex()
   const items = html.match(/<li [^]*?<\/li>/g)
   assert.deepEqual(items.map(given), ['Ada', 'Bram', 'Cy', 'Dot', 'Eli', 'Fay'])
   assert.match(items[2], /^<li data-n="cy thistle" data-b=1850>/)
   for (const i of [1, 3, 5]) assert.doesNotMatch(items[i], /data-b/)
-  assert.match(html, /<button type=button id=sort hidden>A–Z<\/button>/)
+  assert.match(html, /<label id=sortby hidden>Sort by <select id=sort>/)
+  assert.deepEqual([...html.matchAll(/<option value=(\w+)( selected)?>([^<]*)</g)].map(m => [m[1], !!m[2], m[3]]), [
+    ['name', true, 'Name (A–Z)'], ['old', false, 'Birth year, oldest first'], ['new', false, 'Birth year, newest first']])
 })
 
-test('the sort button cycles A-Z, oldest first, newest first, undated always last', () => {
+test('the sort-by menu reorders by name, oldest first or newest first, undated always last', () => {
   const html = sortedIndex()
   const el = (attrs = {}, text = '') => ({ attrs, textContent: text, hidden: true, style: {}, handlers: {}, children: [],
     getAttribute: k => attrs[k] ?? null, hasAttribute: k => k in attrs,
@@ -226,20 +228,17 @@ test('the sort button cycles A-Z, oldest first, newest first, undated always las
     if (b) attrs['data-b'] = b[1]
     return Object.assign(el(attrs), { name: given(li) })
   })
-  const byId = { q: Object.assign(el(), { value: '' }), photos: Object.assign(el(), { checked: false }), list, sort: el({}, 'A–Z') }
+  const byId = { sortby: el(), q: Object.assign(el(), { value: '' }), photos: Object.assign(el(), { checked: false }), list, sort: Object.assign(el(), { value: 'name' }) }
   new Function('document', html.match(/<script>([^]*?)<\/script>/)[1])({ getElementById: id => byId[id] })
   const order = () => list.children.map(e => e.name).join(' ')
-  const click = () => byId.sort.handlers.click()
-  assert.equal(byId.sort.hidden, false)
+  const pick = v => { byId.sort.value = v; byId.sort.handlers.change() }
+  assert.equal(byId.sortby.hidden, false)
   assert.equal(order(), 'Ada Bram Cy Dot Eli Fay')
-  click()
-  assert.equal(byId.sort.textContent, 'Oldest first')
+  pick('old')
   assert.equal(order(), 'Cy Ada Eli Bram Dot Fay')
-  click()
-  assert.equal(byId.sort.textContent, 'Newest first')
+  pick('new')
   assert.equal(order(), 'Ada Eli Cy Bram Dot Fay')
-  click()
-  assert.equal(byId.sort.textContent, 'A–Z')
+  pick('name')
   assert.equal(order(), 'Ada Bram Cy Dot Eli Fay')
 })
 
