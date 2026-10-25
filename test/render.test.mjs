@@ -173,3 +173,22 @@ test('escapes a title and source that contain markup', () => {
   assert.match(html, /<h1>A &amp; &lt;B&gt;<\/h1>/)
   assert.match(html, /<code>&lt;x&gt;\.ged<\/code>/)
 })
+
+test('indexPage lists people oldest-first, undated last, with a JS-only sort toggle', () => {
+  const p = (id, giv, date, resn) => ({ id, giv, surn: 'Thistle', name: `${giv} Thistle`, media: [], birt: { date, resn }, deat: {} })
+  const indi = new Map([
+    ['I1', p('I1', 'Ada', '1900')],
+    ['I2', p('I2', 'Bram', undefined)],
+    ['I3', p('I3', 'Cy', 'ABT 1850')],
+    ['I4', p('I4', 'Dot', 'ABT 190')],
+    ['I5', p('I5', 'Eli', '3 FEB 1875')],
+    ['I6', p('I6', 'Fay', '1800', 'PRIVACY')],
+  ])
+  const kin = { primary: null, parentsOf: () => [null, null] }
+  const html = new Renderer({ indi, fam: new Map(), kin, copied: new Map() }).indexPage()
+  const items = html.match(/<li [^]*?<\/li>/g)
+  assert.deepEqual(items.map(li => li.match(/Thistle, (\w+)</)[1]), ['Cy', 'Eli', 'Ada', 'Bram', 'Dot', 'Fay'])
+  assert.match(items[0], /^<li data-n="cy thistle" data-b=1850>/)
+  for (const li of items.slice(3)) assert.doesNotMatch(li, /data-b/)
+  assert.match(html, /<button type=button id=sort hidden>Oldest first<\/button>/)
+})
