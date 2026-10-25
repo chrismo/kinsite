@@ -133,6 +133,20 @@ test('personPage lists siblings, children and descendants by birth year, undated
   assert.deepEqual(names('<h2>Descendants</h2>'), ['Fen Zed', 'Eli Zed', 'Hal Zed', 'Gus Zed'])
 })
 
+test('personPage puts the chart before the photos and facts, whatever their length', () => {
+  const [id, p] = person('I1', 'Ash', '1950')
+  p.events = [{ tag: 'OCCU', val: 'Wheelwright' }]
+  p.media = [{ file: 'ash.jpg', title: 'Ash at the fair' }]
+  const indi = new Map([[id, p]])
+  const kin = new Kin(indi, new Map(), 'I1')
+  const copied = new Map([['ash.jpg', 'photos/ash.jpg']])
+  const { html } = new Renderer({ indi, fam: new Map(), kin, copied }).personPage('I1')
+  const chart = html.indexOf('<h2>Family</h2>')
+  assert.ok(chart > 0)
+  assert.ok(html.indexOf('class="photos"') > chart)
+  assert.ok(html.indexOf('class=card') > chart)
+})
+
 test('indexPage marks people with photos and offers a photos-only filter', () => {
   const p = (id, giv, media = []) => ({ id, giv, surn: 'Thistle', name: `${giv} Thistle`, media, birt: {}, deat: {} })
   const indi = new Map([
