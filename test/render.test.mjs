@@ -2,6 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { esc, yr, life, when, Renderer } from '../lib/render.mjs'
 import { Kin } from '../lib/kin.mjs'
+import { anonymize } from '../lib/living.mjs'
 
 test('esc matches Python html.escape', () => {
   assert.equal(esc(`<a href="x">Salt & Pepper's</a>`),
@@ -172,4 +173,27 @@ test('escapes a title and source that contain markup', () => {
   const html = new Renderer({ indi, fam: new Map(), kin, copied: new Map(), title: 'A & <B>', source: '<x>.ged' }).indexPage()
   assert.match(html, /<h1>A &amp; &lt;B&gt;<\/h1>/)
   assert.match(html, /<code>&lt;x&gt;\.ged<\/code>/)
+})
+
+test('a living person renders as Private on their own page and wherever they are linked', () => {
+  const raw = new Map([person('I1', 'Ash', '1890', null, ['F1']), person('I2', 'Wren', '2061', 'F1')])
+  raw.get('I1').deat = { tag: 'DEAT', date: '1950' }
+  const wren = raw.get('I2')
+  Object.assign(wren, { sex: 'F', notes: ['Keeps bees'], media: [{ file: 'wren.png', title: 'Wren at the mill' }] })
+  wren.birt = { tag: 'BIRT', val: '', date: '2061', plac: 'Glimmerholt' }
+  wren.events = [wren.birt]
+  const fam0 = new Map([['F1', { id: 'F1', husb: 'I1', wife: null, chil: ['I2'], marr: {} }]])
+  const { indi, fam } = anonymize(raw, fam0, 2026)
+  const kin = new Kin(indi, fam, 'I1')
+  const r = new Renderer({ indi, fam, kin, copied: new Map([['wren.png', 'media/wren.png']]) })
+  const own = r.personPage('I2').html
+  assert.match(own, /<title>Private<\/title>/)
+  assert.match(own, /<h1>Private<\/h1>/)
+  assert.doesNotMatch(own, /Wren|Zed|2061|Glimmerholt|bees|wren\.png|Female|<h2>/)
+  const parent = r.personPage('I1').html
+  assert.match(parent, /<a href="I2\.html">Private<\/a>/)
+  assert.doesNotMatch(parent, /Wren|2061/)
+  const index = r.indexPage()
+  assert.match(index, /<li data-n="private"><a href="I2\.html">Private<\/a><\/li>/)
+  assert.doesNotMatch(index, /Wren|2061/)
 })
