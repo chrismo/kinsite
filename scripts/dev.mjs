@@ -1,12 +1,9 @@
 #!/usr/bin/env node
-// Local preview: build the sample, serve it, rebuild on change.
-//   npm run dev            # http://localhost:4000
-//   PORT=5000 npm run dev
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { execFileSync } from 'node:child_process'
 import { loadConfig } from '../lib/config.mjs'
-import { buildSite } from '../lib/build.mjs'
 import { createServer } from './serve.mjs'
 
 const repo = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -17,12 +14,13 @@ const state = { version: 1 }
 function rebuild() {
   try {
     const config = loadConfig(configFile)
-    buildSite(config, { log: () => {} })
+    // In-process rebuilds would reuse the cached lib/ modules.
+    execFileSync(process.execPath, [path.join(repo, 'build.mjs'), configFile], { stdio: ['ignore', 'ignore', 'pipe'] })
     state.version++
     console.log(`built (v${state.version})`)
     return config.out
   } catch (e) {
-    console.error(`build failed, serving last good output: ${e.message}`)
+    console.error(`build failed, serving last good output: ${e.stderr?.toString().trim() || e.message}`)
   }
 }
 
