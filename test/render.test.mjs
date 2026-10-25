@@ -174,21 +174,56 @@ test('escapes a title and source that contain markup', () => {
   assert.match(html, /<code>&lt;x&gt;\.ged<\/code>/)
 })
 
-test('indexPage lists people oldest-first, undated last, with a JS-only sort toggle', () => {
+const sortedIndex = () => {
   const p = (id, giv, date, resn) => ({ id, giv, surn: 'Thistle', name: `${giv} Thistle`, media: [], birt: { date, resn }, deat: {} })
   const indi = new Map([
     ['I1', p('I1', 'Ada', '1900')],
     ['I2', p('I2', 'Bram', undefined)],
     ['I3', p('I3', 'Cy', 'ABT 1850')],
     ['I4', p('I4', 'Dot', 'ABT 190')],
-    ['I5', p('I5', 'Eli', '3 FEB 1875')],
+    ['I5', p('I5', 'Eli', '1900')],
     ['I6', p('I6', 'Fay', '1800', 'PRIVACY')],
   ])
   const kin = { primary: null, parentsOf: () => [null, null] }
-  const html = new Renderer({ indi, fam: new Map(), kin, copied: new Map() }).indexPage()
+  return new Renderer({ indi, fam: new Map(), kin, copied: new Map() }).indexPage()
+}
+const given = li => li.match(/Thistle, (\w+)</)[1]
+
+test('indexPage lists people A-Z by default, with birth years and a JS-only sort button', () => {
+  const html = sortedIndex()
   const items = html.match(/<li [^]*?<\/li>/g)
-  assert.deepEqual(items.map(li => li.match(/Thistle, (\w+)</)[1]), ['Cy', 'Eli', 'Ada', 'Bram', 'Dot', 'Fay'])
-  assert.match(items[0], /^<li data-n="cy thistle" data-b=1850>/)
-  for (const li of items.slice(3)) assert.doesNotMatch(li, /data-b/)
-  assert.match(html, /<button type=button id=sort hidden>Oldest first<\/button>/)
+  assert.deepEqual(items.map(given), ['Ada', 'Bram', 'Cy', 'Dot', 'Eli', 'Fay'])
+  assert.match(items[2], /^<li data-n="cy thistle" data-b=1850>/)
+  for (const i of [1, 3, 5]) assert.doesNotMatch(items[i], /data-b/)
+  assert.match(html, /<button type=button id=sort hidden>A–Z<\/button>/)
+})
+
+test('the sort button cycles A-Z, oldest first, newest first, undated always last', () => {
+  const html = sortedIndex()
+  const el = (attrs = {}, text = '') => ({ attrs, textContent: text, hidden: true, style: {}, handlers: {}, children: [],
+    getAttribute: k => attrs[k] ?? null, hasAttribute: k => k in attrs,
+    addEventListener(t, fn) { this.handlers[t] = fn } })
+  const list = el()
+  list.appendChild = e => { const i = list.children.indexOf(e); if (i > -1) list.children.splice(i, 1); list.children.push(e) }
+  list.children = html.match(/<li [^]*?<\/li>/g).map(li => {
+    const attrs = { 'data-n': li.match(/data-n="([^"]*)"/)[1] }
+    const b = li.match(/data-b=(\d+)/)
+    if (b) attrs['data-b'] = b[1]
+    return Object.assign(el(attrs), { name: given(li) })
+  })
+  const byId = { q: Object.assign(el(), { value: '' }), photos: Object.assign(el(), { checked: false }), list, sort: el({}, 'A–Z') }
+  new Function('document', html.match(/<script>([^]*?)<\/script>/)[1])({ getElementById: id => byId[id] })
+  const order = () => list.children.map(e => e.name).join(' ')
+  const click = () => byId.sort.handlers.click()
+  assert.equal(byId.sort.hidden, false)
+  assert.equal(order(), 'Ada Bram Cy Dot Eli Fay')
+  click()
+  assert.equal(byId.sort.textContent, 'Oldest first')
+  assert.equal(order(), 'Cy Ada Eli Bram Dot Fay')
+  click()
+  assert.equal(byId.sort.textContent, 'Newest first')
+  assert.equal(order(), 'Ada Eli Cy Bram Dot Fay')
+  click()
+  assert.equal(byId.sort.textContent, 'A–Z')
+  assert.equal(order(), 'Ada Bram Cy Dot Eli Fay')
 })
