@@ -1,10 +1,23 @@
 {
   "name": "kinsite",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "type": "module",
   "description": "Static HTML family-tree site from a GEDCOM file",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chrismo/kinsite.git"
+  },
+  "homepage": "https://github.com/chrismo/kinsite#readme",
+  "bugs": {
+    "url": "https://github.com/chrismo/kinsite/issues"
+  },
+  "keywords": [
+    "gedcom",
+    "genealogy",
+    "family-tree",
+    "static-site"
+  ],
   "engines": {
     "node": ">=22"
   },
