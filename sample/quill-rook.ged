@@ -1,0 +1,190 @@
+0 HEAD
+1 GEDC
+2 VERS 7.0
+1 NOTE An invented family for kinsite's demo and tests. Every name, place,
+2 CONT date, number and address in this file is fictional.
+0 @SUB1@ SUBM
+1 NAME Sample Submitter
+1 ADDR 3 Wickerlane Rd.
+2 CONT Marrowby, QX 00000
+1 PHON 555-555-0101
+1 EMAIL submitter@example.com
+0 @I1@ INDI
+1 NAME Abner /Quill/
+1 SEX M
+1 BIRT
+2 DATE 3 FEB 1841
+2 PLAC Marrowby, Tansy Shire, Westmarch
+1 OCCU Wheelwright
+1 DEAT
+2 DATE ABT 1910
+2 PLAC Marrowby, Tansy Shire, Westmarch
+1 BURI
+2 PLAC Saltmere churchyard
+1 FAMS @F1@
+0 @I2@ INDI
+1 NAME Briony /Thistle/
+1 SEX F
+1 BIRT
+2 DATE BET 1844 AND 1845
+2 PLAC Lower Tansy, Tansy Shire, Westmarch
+1 DEAT
+2 DATE 9 OCT 1921
+1 FAMS @F1@
+0 @I3@ INDI
+1 NAME Corwin /Quill/
+1 SEX M
+1 BIRT
+2 DATE 12 MAY 1872
+2 PLAC Marrowby, Tansy Shire, Westmarch
+1 RESI
+2 DATE FROM 1895 TO 1930
+2 PLAC 44 Quillon Ave, Fenwick Hollow, Tansy Shire, Westmarch
+1 DEAT
+2 DATE 1 MAR 1944
+2 PLAC Fenwick Hollow, Tansy Shire, Westmarch
+1 FAMC @F1@
+1 FAMS @F3@
+0 @I4@ INDI
+1 NAME Dorrit /Rook/
+1 SEX M
+1 BIRT
+2 DATE 1850
+2 PLAC Upper Fennel, Brindle Shire, Westmarch
+1 DEAT
+2 DATE BEF 1899
+1 FAMS @F2@
+0 @I5@ INDI
+1 NAME Elspet /Marlow/
+1 SEX F
+1 BIRT
+2 DATE 1852
+1 CHR
+2 DATE 20 JUN 1852
+2 PLAC Lanternfield Chapel, Upper Fennel
+1 DEAT
+2 DATE 1930
+1 FAMS @F2@
+0 @I6@ INDI
+1 NAME Fennel /Rook/
+1 SEX F
+1 BIRT
+2 DATE 30 NOV 1876
+2 PLAC Upper Fennel, Brindle Shire, Westmarch
+1 DEAT
+2 DATE 1958
+1 FAMC @F2@
+1 FAMS @F3@
+0 @I8@ INDI
+1 NAME Hollis /Rook/
+1 SEX M
+1 BIRT
+2 DATE 1879
+2 PLAC Upper Fennel, Brindle Shire, Westmarch
+1 EMIG
+2 DATE 1901
+1 OCCU Lamplighter
+1 DEAT
+2 DATE
+3 PHRASE after 1920, overseas
+1 FAMC @F2@
+1 NOTE Wrote home twice a year. His last letter asked for replies to
+2 CONT hollis.rook@example.org.
+0 @I9@ INDI
+1 NAME Iona /Quill/
+1 SEX F
+1 BIRT
+2 DATE 1899
+2 PLAC Fenwick Hollow, Tansy Shire, Westmarch
+1 DEAT
+2 DATE 1987
+1 FAMC @F3@
+0 @I10@ INDI
+1 NAME Gideon Osric /Quill/
+1 SEX M
+1 BIRT
+2 DATE 8 NOV 1906
+3 PHRASE day smudged in the register
+2 PLAC Fenwick Hollow, Tansy Shire, Westmarch
+1 EVEN Blue ribbon
+2 TYPE Harvest show
+1 DEAT
+2 DATE 14 AUG 1979
+2 PLAC Marrowby, Tansy Shire, Westmarch
+1 OBJE @O1@
+1 FAMC @F3@
+1 FAMS @F4@
+1 NOTE Kept the family ledger. The ledger lists the shop telephone as
+2 CONT 555-555-0177 and the shop at 9 Brindle St.
+0 @I11@ INDI
+1 NAME Juniper /Quill/
+1 SEX F
+1 FAMC @F3@
+0 @I12@ INDI
+1 NAME Saffron /Vale/
+1 SEX F
+1 BIRT
+2 DATE 1906
+2 PLAC Quietbrook, Tansy Shire, Westmarch
+1 DEAT
+2 DATE 1990
+1 FAMS @F4@
+0 @I13@ INDI
+1 NAME Kestrel /Quill/
+1 SEX M
+1 BIRT
+2 DATE 1931
+2 PLAC Marrowby, Tansy Shire, Westmarch
+1 OCCU Lighthouse keeper
+2 DATE 1960
+2 RESN CONFIDENTIAL
+1 FAMC @F4@
+0 @I14@ INDI
+1 NAME Linnet /Quill/
+1 SEX F
+1 BIRT
+2 DATE 1928
+2 PLAC Marrowby, Tansy Shire, Westmarch
+1 FAMC @F4@
+0 @I15@ INDI
+1 NAME Merrow /Sedge/
+1 SEX M
+1 BIRT
+2 DATE 1880
+1 NOTE Not connected to the rest of the tree yet.
+0 @F1@ FAM
+1 HUSB @I1@
+1 WIFE @I2@
+1 CHIL @I3@
+1 MARR
+2 DATE 1868
+2 PLAC Marrowby, Tansy Shire, Westmarch
+0 @F2@ FAM
+1 HUSB @I4@
+1 WIFE @I5@
+1 CHIL @I6@
+1 CHIL @I8@
+1 MARR
+2 DATE ABT 1874
+0 @F3@ FAM
+1 HUSB @I3@
+1 WIFE @I6@
+1 CHIL @I10@
+1 CHIL @I9@
+1 CHIL @I11@
+1 MARR
+2 DATE 17 OCT 1897
+2 PLAC Lanternfield Chapel, Upper Fennel
+0 @F4@ FAM
+1 HUSB @I10@
+1 WIFE @I12@
+1 CHIL @I13@
+1 CHIL @I14@
+1 MARR
+2 DATE 1927
+2 PLAC Quietbrook, Tansy Shire, Westmarch
+0 @O1@ OBJE
+1 FILE media/gideon.png
+2 FORM image/png
+2 TITL Gideon at the workbench (placeholder image)
+0 TRLR

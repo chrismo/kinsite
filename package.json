@@ -1,0 +1,19 @@
+{
+  "name": "kinsite",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Static HTML family-tree site from a GEDCOM file",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "kinsite": "build.mjs"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "sample": "node build.mjs sample/kinsite.config.json",
+    "test": "node --test 'test/*.test.mjs'"
+  }
+}
