@@ -54,3 +54,13 @@ test('a config without a gedcom path, or with unknown keys, is an error', () => 
   fs.rmSync(a.dir, { recursive: true })
   fs.rmSync(b.dir, { recursive: true })
 })
+
+test('anonymizeLiving defaults to false and is accepted', () => {
+  assert.equal(DEFAULTS.anonymizeLiving, false)
+  const a = configFile({ gedcom: 'x.ged' })
+  assert.equal(loadConfig(a.file).anonymizeLiving, false)
+  const b = configFile({ gedcom: 'x.ged', anonymizeLiving: true })
+  assert.equal(loadConfig(b.file).anonymizeLiving, true)
+  fs.rmSync(a.dir, { recursive: true })
+  fs.rmSync(b.dir, { recursive: true })
+})
