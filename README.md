@@ -13,6 +13,7 @@ Needs Node 22 or later; no dependencies. Live demo: https://kinsite.chrismo.io
 ```sh
 node build.mjs sample/kinsite.config.json   # build the fictional sample tree into site/
 open site/index.html
+npm run dev                                  # preview the sample at http://localhost:4000 (PORT=... to change); rebuilds and reloads on edits
 npm test
 ```
 

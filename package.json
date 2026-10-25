@@ -31,6 +31,7 @@
   "scripts": {
     "build": "node build.mjs",
     "sample": "node build.mjs sample/kinsite.config.json",
+    "dev": "node scripts/dev.mjs",
     "test": "node --test 'test/*.test.mjs'"
   }
 }
