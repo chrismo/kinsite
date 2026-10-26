@@ -48,6 +48,18 @@ test('anonymize swaps living people for Private stubs, keeps relationships, and 
   assert.deepEqual(fam.get('F2').marr.plac, 'Glimmerholt')
 })
 
+test('anonymize withholds media shared with a living person from everyone', () => {
+  const shared = { file: 'picnic.jpg', title: 'Wren and Old Zed' }, own = { file: 'zed.jpg', title: '' }
+  const indi = new Map([
+    ['I1', { id: 'I1', name: 'Old Zed', birt: { date: '1850' }, deat: { tag: 'DEAT' }, fams: ['F1'], media: [shared, own], notes: [] }],
+    ['I2', { id: 'I2', name: 'Wren Zed', birt: { date: '2060' }, deat: {}, famc: 'F1', fams: [], media: [{ ...shared }], notes: [] }],
+  ])
+  const a = anonymize(indi, new Map(), 2026)
+  assert.deepEqual(a.indi.get('I1').media, [own])
+  assert.deepEqual(a.indi.get('I2').media, [])
+  assert.equal(indi.get('I1').media.length, 2, 'input is not mutated')
+})
+
 const GED = `0 HEAD
 1 GEDC
 2 VERS 7.0
@@ -60,6 +72,7 @@ const GED = `0 HEAD
 1 DEAT
 2 DATE 9 DEC 1911
 1 FAMS @F1@
+1 OBJE @O2@
 0 @I2@ INDI
 1 NAME Marigold Juniper /Fernwhistle/
 1 SEX F
@@ -73,6 +86,7 @@ const GED = `0 HEAD
 1 NOTE Keeps silver-backed bees behind the mill.
 2 CONT Ring 555-0142 if a swarm is found.
 1 OBJE @O1@
+1 OBJE @O2@
 1 FAMC @F1@
 1 FAMS @F2@
 0 @I3@ INDI
@@ -92,11 +106,15 @@ const GED = `0 HEAD
 1 FILE marigold-at-the-mill.png
 2 FORM image/png
 2 TITL Juniper at the mill
+0 @O2@ OBJE
+1 FILE orchard-picnic.png
+2 FORM image/png
+2 TITL Hollis with Juniper Wrenna in the orchard
 0 TRLR
 `
 const SECRETS = ['Marigold', 'marigold', 'Juniper', 'Female', '17 JUN 2063', '2063', 'Glimmerholt', 'Lamplighter',
   'Brackenmoor', 'Thimbleford', '2081', '2090', 'silver-backed bees', 'swarm', '555-0142',
-  'marigold-at-the-mill.png', '5 SEP 2085', '2085', 'Larkspur', 'Tobiah', 'Quenby']
+  'marigold-at-the-mill.png', 'orchard-picnic', 'Wrenna', '5 SEP 2085', '2085', 'Larkspur', 'Tobiah', 'Quenby']
 
 function build(anonymizeLiving) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kinsite-living-'))
@@ -104,6 +122,7 @@ function build(anonymizeLiving) {
   fs.mkdirSync(src)
   fs.writeFileSync(path.join(src, 'tree.ged'), GED)
   fs.writeFileSync(path.join(src, 'marigold-at-the-mill.png'), 'not really a png')
+  fs.writeFileSync(path.join(src, 'orchard-picnic.png'), 'not really a png')
   buildSite({ gedcom: path.join(src, 'tree.ged'), out, mediaRoot: src, title: 'Fernwhistle', focus: 'I1', anonymizeLiving },
     { log: () => {} })
   const files = fs.readdirSync(out, { recursive: true }).sort()
@@ -115,12 +134,12 @@ function build(anonymizeLiving) {
 
 test('with anonymizeLiving, no output file holds a living person\'s name, dates, places, notes or media', () => {
   const plain = build(false)
-  for (const s of ['Marigold', '17 JUN 2063', 'Glimmerholt', 'silver-backed bees', 'marigold-at-the-mill.png', 'Tobiah', '5 SEP 2085'])
+  for (const s of ['Marigold', '17 JUN 2063', 'Glimmerholt', 'silver-backed bees', 'marigold-at-the-mill.png', 'orchard-picnic.png', 'Wrenna', 'Tobiah', '5 SEP 2085'])
     assert.ok(plain.text.includes(s), `control build shows ${s}`)
 
   const { files, text } = build(true)
   assert.ok(files.includes('I2.html') && files.includes('I3.html'), 'living people keep their pages')
-  assert.ok(!files.some(f => f.includes('marigold')), 'media not copied')
+  assert.ok(!files.some(f => f.includes('marigold') || f.includes('orchard')), 'media not copied')
   for (const s of SECRETS) assert.ok(!text.includes(s), `leaked ${s}`)
   assert.match(text, /Hollis Fernwhistle/)
   assert.match(text, /<a href="I2\.html">Private<\/a>/)
