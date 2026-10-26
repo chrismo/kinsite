@@ -8,7 +8,7 @@ output may still change.
 
 ## Usage
 
-Needs Node 22 or later; no dependencies. Live demo: https://kinsite.chrismo.io
+Needs Node 22 or later; no dependencies. Live demo: https://chrismo.github.io/kinsite/
 
 ```sh
 node build.mjs sample/kinsite.config.json   # build the fictional sample tree into site/

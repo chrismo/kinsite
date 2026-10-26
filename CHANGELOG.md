@@ -12,8 +12,8 @@
 - **Chart first.** The family chart is now at the top of every person page, above
   photos and facts. (#6)
 - **Footer link** to the kinsite repo. (#8)
-- **Demo site:** the sample tree is published to https://kinsite.chrismo.io on every
-  push to main. (#1)
+- **Demo site:** the sample tree is published to https://chrismo.github.io/kinsite/
+  on every push to main. (#1)
 - **`npm run dev`:** a local preview of the sample that rebuilds and reloads on
   change.
 
