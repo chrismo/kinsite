@@ -55,8 +55,8 @@ Everything in `sample/` is invented: names, places, dates, numbers and addresses
   `"anonymizeLiving": true`: anyone with no `DEAT` event who was born within the last
   100 years, or has no birth date, still appears in the tree but only as "Private",
   with name, sex, dates, places, events, marriages, notes and media withheld and their
-  media files not copied. A photo shared with anyone else, such as a group photo, is
-  withheld everywhere. Their page stays at the same address and says only "Private".
+  media files not copied. A photo also attached to someone else, such as a group
+  photo, is withheld from their page too. Their page stays at the same address and says only "Private".
   Notes on deceased people's records are shown as written, even if they mention a
   living person.
 - **A chart that stays readable.** A focused neighborhood around one person, never a
