@@ -50,8 +50,9 @@ When a GEDCOM records a birth, christening, baptism, death or burial more than o
 the person page shows every version together: the first as preferred and the rest as
 alternates, the order GEDCOM 7 uses for preference. Under each event come its notes
 and citations, numbered: source title, page, and the quoted text of the record.
-Life spans and the birth-year sort use the first version with a date, which is an
-alternate when the preferred version has none. Marriages don't show notes or citations
+Life spans and the birth-year sort use the first version with a year, which is an
+alternate when the preferred version has none. With `anonymizeLiving`, every birth
+version counts toward deciding who is living, restricted or not. Marriages don't show notes or citations
 yet.
 Citations on the person record or on the name shown (the first `NAME`) are listed
 under Sources at the foot of the page.

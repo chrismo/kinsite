@@ -5,6 +5,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { isLiving, anonymize } from '../lib/living.mjs'
 import { buildSite } from '../lib/build.mjs'
+import { parseGedcom } from '../lib/gedcom.mjs'
 
 const p = (birt, deat = {}) => ({ birt, deat })
 
@@ -155,4 +156,26 @@ test('with anonymizeLiving, no output file holds a living person\'s name, dates,
   for (const s of SECRETS) assert.ok(!text.includes(s), `leaked ${s}`)
   assert.match(text, /Hollis Fernwhistle/)
   assert.match(text, /<a href="I2\.html">Private<\/a>/)
+})
+
+test('every birth version counts toward living, restricted or not', () => {
+  const { indi } = parseGedcom(`0 @I1@ INDI
+1 BIRT
+2 DATE 1990
+2 RESN PRIVACY
+1 BIRT
+2 DATE 1800
+0 @I2@ INDI
+1 BIRT
+1 BIRT
+2 DATE 1800
+0 @I3@ INDI
+1 BIRT
+2 DATE 1800
+1 BIRT
+2 DATE ABT 2001
+`)
+  assert.equal(isLiving(indi.get('I1'), 2026), true, 'a private recent birth is not outweighed by an old alternate')
+  assert.equal(isLiving(indi.get('I2'), 2026), false, 'an undated preferred birth with a dated alternate')
+  assert.equal(isLiving(indi.get('I3'), 2026), true, 'the latest year of any version')
 })

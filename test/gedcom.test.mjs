@@ -231,7 +231,7 @@ test('event notes and citations stay with their event; the first of repeated eve
   assert.deepEqual(p.notes, ['Person note'])
 })
 
-test('birth and death summaries come from the first version with a date', () => {
+test('birth and death summaries come from the first version with a year', () => {
   const { indi } = parseGedcom(`0 @I1@ INDI
 1 BIRT
 2 PLAC Marrowby
@@ -241,6 +241,8 @@ test('birth and death summaries come from the first version with a date', () => 
 1 DEAT
 2 DATE
 3 PHRASE the hard winter
+1 DEAT
+2 DATE 1911
 0 @I2@ INDI
 1 DEAT Y
 1 DEAT Y
@@ -253,7 +255,7 @@ test('birth and death summaries come from the first version with a date', () => 
 `)
   const [a, b, c] = [indi.get('I1'), indi.get('I2'), indi.get('I3')]
   assert.equal(a.birt, a.events[1])
-  assert.equal(a.deat, a.events[3])
+  assert.equal(a.deat, a.events[4])
   assert.equal(b.deat, b.events[0])
   assert.equal(c.birt, c.events[1], 'a restricted version is passed over')
 })
