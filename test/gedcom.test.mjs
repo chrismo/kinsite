@@ -178,6 +178,7 @@ const EVIDENCE = `0 HEAD
 3 CONT the stone may have been recut.
 2 SOUR @S1@
 3 PAGE p. 12
+4 CONT top margin
 3 DATA
 4 DATE 1901
 4 TEXT Abner Quill,
@@ -222,7 +223,7 @@ test('event notes and citations stay with their event; the first of repeated eve
   assert.deepEqual(p.events.slice(0, 2), [
     { tag: 'DEAT', val: '', date: '3 MAR 1901', plac: 'Fernhollow, Wexmoor',
       notes: ['The family Bible says March;\nthe stone may have been recut.'],
-      sources: [cite('Quill family Bible', 'p. 12', 'Abner Quill,\nd. 3rd March 1901', ['Ink faded.'])] },
+      sources: [cite('Quill family Bible', 'p. 12\ntop margin', 'Abner Quill,\nd. 3rd March 1901', ['Ink faded.'])] },
     { tag: 'DEAT', val: '', date: '1902', plac: 'Fernhollow Churchyard, Wexmoor',
       sources: [cite('Fernhollow churchyard\nsurvey', 'Plot 14')] },
   ])
@@ -243,11 +244,18 @@ test('birth and death summaries come from the first version with a date', () => 
 0 @I2@ INDI
 1 DEAT Y
 1 DEAT Y
+0 @I3@ INDI
+1 BIRT
+2 DATE 1841
+2 RESN PRIVACY
+1 BIRT
+2 DATE 1842
 `)
-  const [a, b] = [indi.get('I1'), indi.get('I2')]
+  const [a, b, c] = [indi.get('I1'), indi.get('I2'), indi.get('I3')]
   assert.equal(a.birt, a.events[1])
   assert.equal(a.deat, a.events[3])
   assert.equal(b.deat, b.events[0])
+  assert.equal(c.birt, c.events[1], 'a restricted version is passed over')
 })
 
 test('a NOTE that points to a shared note record is skipped, not shown as its pointer', () => {
