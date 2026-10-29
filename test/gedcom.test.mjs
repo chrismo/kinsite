@@ -13,8 +13,8 @@ const GED = `0 HEAD
 1 BIRT
 2 DATE 4 JUL 1890
 2 PLAC Marrowby, Tansy Shire, QX,
-2 NOTE birth note is not a person note
-3 CONT ignored
+2 NOTE birth note stays with the birth
+3 CONT and its continuation
 1 DEAT
 2 DATE 1960
 1 BURI
@@ -60,7 +60,7 @@ test('first NAME wins; surname and given split on slashes', () => {
 test('birth and death keep DATE/PLAC; a burial place is not a death place', () => {
   const p = parseGedcom(GED).indi.get('I1')
   assert.deepEqual(p.birt, { tag: 'BIRT', val: '', date: '4 JUL 1890', plac: 'Marrowby, Tansy Shire, QX,',
-    notes: ['birth note is not a person note\nignored'] })
+    notes: ['birth note stays with the birth\nand its continuation'] })
   assert.deepEqual(p.deat, { tag: 'DEAT', val: '', date: '1960' })
   assert.equal(p.sex, 'M')
 })
