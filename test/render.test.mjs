@@ -359,3 +359,18 @@ test('with citations off, events keep their notes but no citation or Sources lis
   assert.match(html, /Stone recut/)
   assert.doesNotMatch(html, /Parish register|Census|Ledger|Sources|class=cite/)
 })
+
+test('with notes off, person and event notes are not shown but citations and their own notes are', () => {
+  const { indi, kin } = sourced()
+  indi.get('I1').events[0].sources[0].notes = ['Entry is faded']
+  const { html } = new Renderer({ indi, fam: new Map(), kin, copied: new Map(), notes: false }).personPage('I1')
+  assert.doesNotMatch(html, /Stone recut|Person note|<h2>Notes<\/h2>|class=note/)
+  assert.match(html, /\[1\]<\/span> Parish register, f\. 3<div class=enote>Entry is faded<\/div>/)
+  assert.match(html, /<h2>Sources<\/h2>/)
+})
+
+test('with notes off, a version that has only a note is not shown as an alternate', () => {
+  const r = new Renderer({ notes: false })
+  assert.deepEqual(evidence(r.eventsHtml({ events: [{ tag: 'DEAT', val: '', date: '1911' },
+    { tag: 'DEAT', val: '', notes: ['Said to be 1912'] }, { tag: 'OCCU', val: '', notes: ['Miller'] }] })), ['Died 1911'])
+})

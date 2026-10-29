@@ -37,10 +37,46 @@ For your own tree, write a `kinsite.config.json` next to your GEDCOM:
 | `out`             | Output directory (deleted and rebuilt on each run)                            | `site`                 |
 | `mediaRoot`       | Base directory for relative `FILE` paths of photos and documents              | the config's directory |
 | `anonymizeLiving` | Show living people only as "Private", for a public site (see Goals)           | `false`                |
-| `citations`       | Show source citations on person pages; event notes show either way            | `true`                 |
+| `citations`       | Show source citations on person pages; event notes follow `notes`             | `true`                 |
+| `notes`           | Show person and event notes; a citation's own notes go with the citation       | `true`                 |
 
 Relative paths resolve against the config file's directory. `FOCUS=I3` or `OUT=dir` in
-the environment override the config for one run.
+the environment override the config for one run. The build log says what was
+published, e.g. `published   : citations shown, notes hidden, living anonymized`.
+
+### A research site or a public site
+
+The defaults suit a **research site**: one you and other researchers reach behind
+proper authorization, showing everything the GEDCOM records, living people included.
+
+```json
+{
+  "gedcom": "my-tree.ged",
+  "title": "My Family Tree (research)",
+  "out": "site-research"
+}
+```
+
+A **public site** is for relatives and anyone else to browse without a login: living
+people appear only as "Private", and the working notes and citations behind the
+research are left out.
+
+```json
+{
+  "gedcom": "my-tree.ged",
+  "title": "My Family Tree",
+  "out": "site-public",
+  "anonymizeLiving": true,
+  "citations": false,
+  "notes": false
+}
+```
+
+Each setting stands alone, so a public site can still show citations or notes. With
+`anonymizeLiving`, a living person's own notes and citations are withheld whatever these
+say, but notes and citations on other people's records are shown as written: they can
+still name a living relative. A citation's own notes go with the citation, so turning off
+only `notes` still publishes them.
 
 Everything in `sample/` is invented: names, places, dates, numbers and addresses.
 
@@ -73,8 +109,9 @@ yet.
   with name, sex, dates, places, events, marriages, notes, citations and media withheld and their
   media files not copied. A photo also attached to someone else, such as a group
   photo, is withheld from their page too. Their page stays at the same address and says only "Private".
-  Notes on deceased people's records are shown as written, even if they mention a
-  living person.
+  Notes and citations on deceased people's records are shown as written, even if they
+  mention a living person, unless `notes` and `citations` are off (see "A research site
+  or a public site").
 - **A chart that stays readable.** A focused neighborhood around one person, never a
   whole tree shrunk until the text is useless.
 - **Works on a phone.**
