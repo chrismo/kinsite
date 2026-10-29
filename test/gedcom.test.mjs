@@ -192,6 +192,8 @@ const EVIDENCE = `0 HEAD
 1 SOUR @VOID@
 2 PAGE Told by a cousin
 1 SOUR @S9@
+1 SOUR Told by Aunt Wenna
+2 CONT at the fair
 1 NOTE Person note
 0 @S1@ SOUR
 1 TITL Quill family Bible
@@ -225,6 +227,7 @@ test('citations on the person and on the shown name are person sources; dangling
     cite(''),
     cite('', 'Told by a cousin'),
     cite(''),
+    cite('Told by Aunt Wenna\nat the fair'),
   ])
   assert.deepEqual(parseGedcom(GED).indi.get('I1').sources, [])
 })

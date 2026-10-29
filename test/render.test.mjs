@@ -295,7 +295,14 @@ test('repeated birth, baptism, death or burial reads as one fact: the first pref
     ' 1902 alternate',
     'Buried Saltmere churchyard',
   ])
-  assert.match(html, /<div class="evt alt"><span class="lbl"><\/span> 1902 <span class=pref>alternate<\/span><\/div>/)
+  assert.match(html, /<div class="evt"><span class="lbl"><\/span> 1902 <span class=pref>alternate<\/span><\/div>/)
+})
+
+test('a repeat with nothing to show is not counted as a version', () => {
+  const r = new Renderer({})
+  const text = events => evidence(r.eventsHtml({ events }))
+  assert.deepEqual(text([{ tag: 'BURI', val: '' }, { tag: 'BURI', val: '', plac: 'Saltmere' }]), ['Buried Saltmere'])
+  assert.deepEqual(text([{ tag: 'CHR', val: '', date: '1891' }, { tag: 'CHR', val: '', plac: '?' }]), ['Christened 1891'])
 })
 
 test('event notes and citations show under their event, numbered, with contact details redacted', () => {
