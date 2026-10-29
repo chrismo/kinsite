@@ -64,7 +64,7 @@ test('findContactText catches contact details that look like PII even when the G
   fs.rmSync(dir, { recursive: true })
 })
 
-test('contact details in event notes, citations and source titles do not reach the built site', () => {
+test('contact details in event notes, citations and source titles do not reach the built site; citations can be turned off', () => {
   const dir = site({ 'tree.ged': `0 HEAD
 1 GEDC
 2 VERS 7.0
@@ -90,5 +90,9 @@ test('contact details in event notes, citations and source titles do not reach t
   assert.match(page, /Ask the sexton at \[phone\]/)
   assert.match(page, /<h2>Sources<\/h2>/)
   assert.deepEqual(findContactText(out), [])
+  buildSite({ gedcom: path.join(dir, 'tree.ged'), out, mediaRoot: dir, citations: false }, { log: () => {} })
+  const bare = fs.readFileSync(path.join(out, 'I1.html'), 'utf8')
+  assert.match(bare, /Ask the sexton/)
+  assert.doesNotMatch(bare, /Sources|class=cite/)
   fs.rmSync(dir, { recursive: true })
 })

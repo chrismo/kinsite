@@ -47,15 +47,17 @@ Everything in `sample/` is invented: names, places, dates, numbers and addresses
 ## Facts and their sources
 
 When a GEDCOM records a birth, christening, baptism, death or burial more than once,
-the person page shows every version together: the first as preferred and the rest as
-alternates, the order GEDCOM 7 uses for preference. Under each event come its notes
-and citations, numbered: source title, page, and the quoted text of the record.
-Life spans and the birth-year sort use the first version with a year, which is an
-alternate when the preferred version has none. With `anonymizeLiving`, every birth
-version counts toward deciding who is living, restricted or not. Marriages don't show notes or citations
+the person page shows the versions together, in file order, which GEDCOM 7 uses for
+preference: the first shown is marked preferred and the rest alternates. Versions
+with nothing to show, and those marked `RESN PRIVACY` or `CONFIDENTIAL`, are left out.
+Life spans and the birth-year sort use the first version with a year. With
+`anonymizeLiving`, every birth version counts toward deciding who is living,
+restricted or not.
+
+Under each event come its notes and citations, numbered: source title, page, and the
+quoted text of the record. Citations on the person record or on the name shown are
+listed under Sources at the foot of the page. Marriages don't show notes or citations
 yet.
-Citations on the person record or on the name shown (the first `NAME`) are listed
-under Sources at the foot of the page.
 
 ## Goals
 
