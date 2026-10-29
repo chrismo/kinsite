@@ -40,7 +40,7 @@ test('anonymize swaps living people for Private stubs, keeps relationships, and 
   assert.equal(a.indi.get('I1'), indi.get('I1'))
   assert.deepEqual(a.indi.get('I2'), {
     id: 'I2', name: 'Private', surn: '', giv: '', sex: '', private: true,
-    birt: {}, deat: {}, events: [], famc: 'F1', fams: ['F2'], media: [], notes: [],
+    birt: {}, deat: {}, events: [], famc: 'F1', fams: ['F2'], media: [], notes: [], sources: [],
   })
   assert.equal(a.fam.get('F1'), fam.get('F1'))
   assert.deepEqual(a.fam.get('F2'), { id: 'F2', husb: 'I2', wife: null, chil: [], marr: {} })
@@ -79,6 +79,12 @@ const GED = `0 HEAD
 1 BIRT
 2 DATE 17 JUN 2063
 2 PLAC Glimmerholt, Vane Shire
+2 NOTE Born during the lantern festival.
+2 SOUR @S1@
+3 PAGE Entry 88
+3 DATA
+4 TEXT Marigold, a daughter
+3 NOTE Midwife's hand
 1 OCCU Lamplighter of Brackenmoor
 1 RESI
 2 DATE FROM 2081 TO 2090
@@ -89,6 +95,8 @@ const GED = `0 HEAD
 1 OBJE @O2@
 1 FAMC @F1@
 1 FAMS @F2@
+1 SOUR @S1@
+2 PAGE Entry 91
 0 @I3@ INDI
 1 NAME Tobiah /Quenby/
 1 SEX M
@@ -110,11 +118,14 @@ const GED = `0 HEAD
 1 FILE orchard-picnic.png
 2 FORM image/png
 2 TITL Hollis with Juniper Wrenna in the orchard
+0 @S1@ SOUR
+1 TITL Thistledown birth roll
 0 TRLR
 `
 const SECRETS = ['Marigold', 'marigold', 'Juniper', 'Female', '17 JUN 2063', '2063', 'Glimmerholt', 'Lamplighter',
   'Brackenmoor', 'Thimbleford', '2081', '2090', 'silver-backed bees', 'swarm', '555-0142',
-  'marigold-at-the-mill.png', 'orchard-picnic', 'Wrenna', '5 SEP 2085', '2085', 'Larkspur', 'Tobiah', 'Quenby']
+  'marigold-at-the-mill.png', 'orchard-picnic', 'Wrenna', '5 SEP 2085', '2085', 'Larkspur', 'Tobiah', 'Quenby',
+  'lantern festival', 'Thistledown', 'Entry 88', 'a daughter', 'Midwife', 'Entry 91']
 
 function build(anonymizeLiving) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kinsite-living-'))
@@ -134,7 +145,8 @@ function build(anonymizeLiving) {
 
 test('with anonymizeLiving, no output file holds a living person\'s name, dates, places, notes or media', () => {
   const plain = build(false)
-  for (const s of ['Marigold', '17 JUN 2063', 'Glimmerholt', 'silver-backed bees', 'marigold-at-the-mill.png', 'orchard-picnic.png', 'Wrenna', 'Tobiah', '5 SEP 2085'])
+  for (const s of ['Marigold', '17 JUN 2063', 'Glimmerholt', 'silver-backed bees', 'marigold-at-the-mill.png', 'orchard-picnic.png', 'Wrenna', 'Tobiah', '5 SEP 2085',
+    'lantern festival', 'Thistledown', 'Entry 88', 'a daughter', 'Midwife', 'Entry 91'])
     assert.ok(plain.text.includes(s), `control build shows ${s}`)
 
   const { files, text } = build(true)

@@ -64,3 +64,10 @@ test('anonymizeLiving defaults to false and is accepted', () => {
   fs.rmSync(a.dir, { recursive: true })
   fs.rmSync(b.dir, { recursive: true })
 })
+
+test('citations default to shown and can be turned off', () => {
+  assert.equal(DEFAULTS.citations, true)
+  const a = configFile({ gedcom: 'x.ged', citations: false })
+  assert.equal(loadConfig(a.file).citations, false)
+  fs.rmSync(a.dir, { recursive: true })
+})

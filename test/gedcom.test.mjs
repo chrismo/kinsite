@@ -59,7 +59,8 @@ test('first NAME wins; surname and given split on slashes', () => {
 
 test('birth and death keep DATE/PLAC; a burial place is not a death place', () => {
   const p = parseGedcom(GED).indi.get('I1')
-  assert.deepEqual(p.birt, { tag: 'BIRT', val: '', date: '4 JUL 1890', plac: 'Marrowby, Tansy Shire, QX,' })
+  assert.deepEqual(p.birt, { tag: 'BIRT', val: '', date: '4 JUL 1890', plac: 'Marrowby, Tansy Shire, QX,',
+    notes: ['birth note is not a person note\nignored'] })
   assert.deepEqual(p.deat, { tag: 'DEAT', val: '', date: '1960' })
   assert.equal(p.sex, 'M')
 })
@@ -153,10 +154,77 @@ test('events keep payload, TYPE, DATE and PLAC in file order; contact fields are
     { tag: 'RESI', val: 'Rooms above the bakery', date: '1900' },
     { tag: 'DEAT', val: 'Y' },
     { tag: 'EVEN', val: 'Blue ribbon', type: 'Harvest show' },
-    { tag: 'BURI', val: '', plac: 'Saltmere churchyard' },
+    { tag: 'BURI', val: '', plac: 'Saltmere churchyard', notes: ['not a person note'] },
     { tag: 'CHR', val: '', resn: 'CONFIDENTIAL, LOCKED', plac: 'Kettleby, QX' },
   ])
   assert.equal(p.deat, p.events[1])
   assert.deepEqual(p.birt, {})
   assert.deepEqual(p.notes, [])
+})
+
+const EVIDENCE = `0 HEAD
+1 GEDC
+2 VERS 7.0
+0 @I1@ INDI
+1 NAME Abner /Quill/
+2 SOUR @S2@
+3 PAGE Baptism roll
+1 NAME Ab /Quill/
+2 SOUR @S1@
+1 DEAT
+2 DATE 3 MAR 1901
+2 PLAC Fernhollow, Wexmoor
+2 NOTE The family Bible says March;
+3 CONT the stone may have been recut.
+2 SOUR @S1@
+3 PAGE p. 12
+3 DATA
+4 DATE 1901
+4 TEXT Abner Quill,
+5 CONT d. 3rd March 1901
+3 NOTE Ink faded.
+1 DEAT
+2 DATE 1902
+2 PLAC Fernhollow Churchyard, Wexmoor
+2 SOUR @S2@
+3 PAGE Plot 14
+1 SOUR @S3@
+1 SOUR @VOID@
+2 PAGE Told by a cousin
+1 SOUR @S9@
+1 NOTE Person note
+0 @S1@ SOUR
+1 TITL Quill family Bible
+1 AUTH not read
+0 @S2@ SOUR
+1 TITL Fernhollow churchyard
+2 CONT survey
+0 @S3@ SOUR
+1 NOTE no title
+0 TRLR
+`
+
+const cite = (title, page = '', text = '', notes = []) => ({ title, page, text, notes })
+
+test('event notes and citations stay with their event; the first of repeated events is the preferred one', () => {
+  const p = parseGedcom(EVIDENCE).indi.get('I1')
+  assert.deepEqual(p.events, [
+    { tag: 'DEAT', val: '', date: '3 MAR 1901', plac: 'Fernhollow, Wexmoor',
+      notes: ['The family Bible says March;\nthe stone may have been recut.'],
+      sources: [cite('Quill family Bible', 'p. 12', 'Abner Quill,\nd. 3rd March 1901', ['Ink faded.'])] },
+    { tag: 'DEAT', val: '', date: '1902', plac: 'Fernhollow Churchyard, Wexmoor',
+      sources: [cite('Fernhollow churchyard\nsurvey', 'Plot 14')] },
+  ])
+  assert.equal(p.deat, p.events[0])
+  assert.deepEqual(p.notes, ['Person note'])
+})
+
+test('citations on the person and on the shown name are person sources; dangling and void ones keep their page', () => {
+  assert.deepEqual(parseGedcom(EVIDENCE).indi.get('I1').sources, [
+    cite('Fernhollow churchyard\nsurvey', 'Baptism roll'),
+    cite(''),
+    cite('', 'Told by a cousin'),
+    cite(''),
+  ])
+  assert.deepEqual(parseGedcom(GED).indi.get('I1').sources, [])
 })

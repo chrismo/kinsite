@@ -4,6 +4,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { piiValues, findLeaks, findContactText } from '../lib/pii.mjs'
+import { buildSite } from '../lib/build.mjs'
 
 const GED = `0 HEAD
 1 GEDC
@@ -60,5 +61,34 @@ test('findContactText catches contact details that look like PII even when the G
     { file: 'I1.html', value: 'submitter@example.com' },
     { file: 'I1.html', value: '555-555-0142' },
   ])
+  fs.rmSync(dir, { recursive: true })
+})
+
+test('contact details in event notes, citations and source titles do not reach the built site', () => {
+  const dir = site({ 'tree.ged': `0 HEAD
+1 GEDC
+2 VERS 7.0
+0 @I1@ INDI
+1 NAME Hollis /Fernwhistle/
+1 DEAT
+2 DATE 1911
+2 NOTE Ask the sexton at 555-555-0142
+2 SOUR @S1@
+3 PAGE Box 12
+3 DATA
+4 TEXT Write to 4 Mill Rd for a copy
+3 NOTE sexton@example.com
+1 SOUR @S1@
+2 PAGE call 555-555-0143
+0 @S1@ SOUR
+1 TITL Letters kept at 9 Lantern Ave
+0 TRLR
+` })
+  const out = path.join(dir, 'site')
+  buildSite({ gedcom: path.join(dir, 'tree.ged'), out, mediaRoot: dir }, { log: () => {} })
+  const page = fs.readFileSync(path.join(out, 'I1.html'), 'utf8')
+  assert.match(page, /Ask the sexton at \[phone\]/)
+  assert.match(page, /<h2>Sources<\/h2>/)
+  assert.deepEqual(findContactText(out), [])
   fs.rmSync(dir, { recursive: true })
 })
