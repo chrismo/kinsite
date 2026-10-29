@@ -41,7 +41,7 @@ For your own tree, write a `kinsite.config.json` next to your GEDCOM:
 | `notes`           | Show person and event notes; a citation's own notes go with the citation       | `true`                 |
 
 Relative paths resolve against the config file's directory. `FOCUS=I3` or `OUT=dir` in
-the environment override the config for one run. The build log ends by saying what was
+the environment override the config for one run. The build log says what was
 published, e.g. `published   : citations shown, notes hidden, living anonymized`.
 
 ### A research site or a public site
@@ -109,8 +109,9 @@ yet.
   with name, sex, dates, places, events, marriages, notes, citations and media withheld and their
   media files not copied. A photo also attached to someone else, such as a group
   photo, is withheld from their page too. Their page stays at the same address and says only "Private".
-  With `notes` on, notes on deceased people's records are shown as written, even if
-  they mention a living person.
+  Notes and citations on deceased people's records are shown as written, even if they
+  mention a living person, unless `notes` and `citations` are off (see "A research site
+  or a public site").
 - **A chart that stays readable.** A focused neighborhood around one person, never a
   whole tree shrunk until the text is useless.
 - **Works on a phone.**
