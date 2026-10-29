@@ -72,9 +72,11 @@ research are left out.
 }
 ```
 
-Each setting stands alone, so a public site can still show citations or notes. Turning
-`citations` or `notes` on never reveals a living person: with `anonymizeLiving`, their
-notes and citations are withheld whatever these say.
+Each setting stands alone, so a public site can still show citations or notes. With
+`anonymizeLiving`, a living person's own notes and citations are withheld whatever these
+say, but notes and citations on other people's records are shown as written: they can
+still name a living relative. A citation's own notes go with the citation, so turning off
+only `notes` still publishes them.
 
 Everything in `sample/` is invented: names, places, dates, numbers and addresses.
 
