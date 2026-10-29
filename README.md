@@ -107,8 +107,8 @@ yet.
   with name, sex, dates, places, events, marriages, notes, citations and media withheld and their
   media files not copied. A photo also attached to someone else, such as a group
   photo, is withheld from their page too. Their page stays at the same address and says only "Private".
-  Notes on deceased people's records are shown as written, even if they mention a
-  living person.
+  With `notes` on, notes on deceased people's records are shown as written, even if
+  they mention a living person.
 - **A chart that stays readable.** A focused neighborhood around one person, never a
   whole tree shrunk until the text is useless.
 - **Works on a phone.**
