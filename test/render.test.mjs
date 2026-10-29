@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { esc, yr, life, when, Renderer } from '../lib/render.mjs'
 import { Kin } from '../lib/kin.mjs'
 import { anonymize } from '../lib/living.mjs'
+import { CONTACT } from '../lib/redact.mjs'
 
 test('esc matches Python html.escape', () => {
   assert.equal(esc(`<a href="x">Salt & Pepper's</a>`),
@@ -271,4 +272,90 @@ test('a living person renders as Private on their own page and wherever they are
   const index = r.indexPage()
   assert.match(index, /<li data-n="private"><a href="I2\.html">Private<\/a><\/li>/)
   assert.doesNotMatch(index, /Wren|2061/)
+})
+
+const evidence = html => html.split(/<\/?div[^>]*>/).map(s => s.replace(/<[^>]+>/g, '')).filter(s => s.trim())
+
+test('repeated birth, baptism, death or burial reads as one fact: the first preferred, the rest alternates', () => {
+  const r = new Renderer({})
+  const html = r.eventsHtml({ events: [
+    { tag: 'DEAT', val: '', date: '3 MAR 1901', plac: 'Fernhollow, Wexmoor' },
+    { tag: 'BIRT', val: '', date: '1841' },
+    { tag: 'RESI', val: '', plac: 'Marrowby' },
+    { tag: 'DEAT', val: '', date: '1902' },
+    { tag: 'RESI', val: '', plac: 'Saltmere' },
+    { tag: 'DEAT', val: '', date: '1903', resn: 'PRIVACY' },
+    { tag: 'BURI', val: '', plac: 'Saltmere churchyard' },
+  ] })
+  assert.deepEqual(evidence(html), [
+    'Born 1841',
+    'Residence Marrowby',
+    'Residence Saltmere',
+    'Died 3 MAR 1901 &middot; Fernhollow, Wexmoor preferred',
+    ' 1902 alternate',
+    'Buried Saltmere churchyard',
+  ])
+  assert.match(html, /<div class="evt"><span class="lbl"><\/span> 1902 <span class=pref>alternate<\/span><\/div>/)
+})
+
+test('a repeat with nothing to show is not counted as a version', () => {
+  const r = new Renderer({})
+  const text = events => evidence(r.eventsHtml({ events }))
+  assert.deepEqual(text([{ tag: 'BURI', val: '' }, { tag: 'BURI', val: '', plac: 'Saltmere' }]), ['Buried Saltmere'])
+  assert.deepEqual(text([{ tag: 'CHR', val: '', date: '1891' }, { tag: 'CHR', val: '', plac: '?' }]), ['Christened 1891'])
+  assert.deepEqual(text([{ tag: 'DEAT', val: 'Y' }, { tag: 'DEAT', val: '', date: '1911' }]), ['Died 1911'])
+  assert.deepEqual(text([{ tag: 'BIRT', val: '' }, { tag: 'BIRT', val: '', plac: '?' }]), ['Born date unknown'])
+  assert.deepEqual(text([{ tag: 'DEAT', val: '', date: '1911' }, { tag: 'DEAT', val: '', notes: ['Said to be 1912'] }]),
+    ['Died 1911 preferred', ' alternate', 'Said to be 1912'])
+})
+
+test('event notes and citations show under their event, numbered, with contact details redacted', () => {
+  const r = new Renderer({})
+  const html = r.eventsHtml({ events: [
+    { tag: 'DEAT', val: '', date: '3 MAR 1901',
+      notes: ['The Bible says March;\nask at 555-555-0142', ' '],
+      sources: [{ title: 'Quill family Bible', page: 'p. 12', text: 'Abner Quill, d. 3rd March 1901', notes: [] }] },
+    { tag: 'BURI', val: '', sources: [
+      { title: '', page: '', text: '', notes: [] },
+      { title: 'Letter from 12 Lantern Ave', page: 'kept by ann@example.com', text: '', notes: ['Call 555-555-0199'] },
+    ] },
+    { tag: 'OCCU', val: '', notes: [''] },
+  ] })
+  assert.deepEqual(evidence(html), [
+    'Died 3 MAR 1901',
+    'The Bible says March;\nask at [phone]',
+    '[1] Quill family Bible, p. 12 — Abner Quill, d. 3rd March 1901',
+    'Buried',
+    '[2] Letter from [address], kept by [email]',
+    'Call [phone]',
+  ])
+  assert.match(html, /<q>Abner Quill, d\. 3rd March 1901<\/q>/)
+  assert.doesNotMatch(html, CONTACT)
+})
+
+const sourced = () => {
+  const [id, p] = person('I1', 'Ash', '1950')
+  p.events = [{ tag: 'DEAT', val: '', date: '2001', notes: ['Stone recut'],
+    sources: [{ title: 'Parish register', page: 'f. 3', text: '', notes: [] }] }]
+  p.notes = ['Person note']
+  p.sources = [{ title: 'Census of 1951', page: 'Kettleby, sheet 4', text: '', notes: [] },
+    { title: '', page: '', text: '', notes: [] }, { title: 'Ledger', page: 'call 555-555-0142', text: '', notes: [] }]
+  const indi = new Map([[id, p]])
+  return { indi, kin: new Kin(indi, new Map(), 'I1') }
+}
+
+test('citations on the person and name go in a Sources list after the notes, numbered on from the events', () => {
+  const { indi, kin } = sourced()
+  const { html } = new Renderer({ indi, fam: new Map(), kin, copied: new Map() }).personPage('I1')
+  assert.match(html, /\[1\]<\/span> Parish register, f\. 3/)
+  const foot = html.split('<h2>Sources</h2>')[1]
+  assert.ok(html.indexOf('<h2>Notes</h2>') < html.indexOf('<h2>Sources</h2>'))
+  assert.deepEqual(evidence(foot.split('<footer>')[0]), ['[2] Census of 1951, Kettleby, sheet 4', '[3] Ledger, call [phone]'])
+})
+
+test('with citations off, events keep their notes but no citation or Sources list is shown', () => {
+  const { indi, kin } = sourced()
+  const { html } = new Renderer({ indi, fam: new Map(), kin, copied: new Map(), citations: false }).personPage('I1')
+  assert.match(html, /Stone recut/)
+  assert.doesNotMatch(html, /Parish register|Census|Ledger|Sources|class=cite/)
 })
