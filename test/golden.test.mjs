@@ -41,6 +41,19 @@ test('the sample site names the sample, not anything baked into the code', () =>
   assert.match(index, /<h2>Family of Gideon Osric Quill<\/h2>/)
 })
 
+test('the build log says what was published', () => {
+  const published = overrides => {
+    const out = fs.mkdtempSync(path.join(os.tmpdir(), 'kinsite-golden-'))
+    const lines = []
+    buildSite(loadConfig(CONFIG, { out, ...overrides }), { log: s => lines.push(s) })
+    fs.rmSync(out, { recursive: true })
+    return lines.filter(s => s.includes('published'))
+  }
+  assert.deepEqual(published({}), ['  published   : citations shown, notes shown, living shown'])
+  assert.deepEqual(published({ citations: false, notes: false, anonymizeLiving: true }),
+    ['  published   : citations hidden, notes hidden, living anonymized'])
+})
+
 test('focus override re-centers the site', () => {
   const out = fs.mkdtempSync(path.join(os.tmpdir(), 'kinsite-golden-'))
   buildSite(loadConfig(CONFIG, { out, focus: 'I1' }), { log: () => {} })

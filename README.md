@@ -37,10 +37,44 @@ For your own tree, write a `kinsite.config.json` next to your GEDCOM:
 | `out`             | Output directory (deleted and rebuilt on each run)                            | `site`                 |
 | `mediaRoot`       | Base directory for relative `FILE` paths of photos and documents              | the config's directory |
 | `anonymizeLiving` | Show living people only as "Private", for a public site (see Goals)           | `false`                |
-| `citations`       | Show source citations on person pages; event notes show either way            | `true`                 |
+| `citations`       | Show source citations on person pages; event notes follow `notes`             | `true`                 |
+| `notes`           | Show person and event notes; a citation's own notes go with the citation       | `true`                 |
 
 Relative paths resolve against the config file's directory. `FOCUS=I3` or `OUT=dir` in
-the environment override the config for one run.
+the environment override the config for one run. The build log ends by saying what was
+published, e.g. `published   : citations shown, notes hidden, living anonymized`.
+
+### A research site or a public site
+
+The defaults suit a **research site**: one you and other researchers reach behind
+proper authorization, showing everything the GEDCOM records, living people included.
+
+```json
+{
+  "gedcom": "my-tree.ged",
+  "title": "My Family Tree (research)",
+  "out": "site-research"
+}
+```
+
+A **public site** is for relatives and anyone else to browse without a login: living
+people appear only as "Private", and the working notes and citations behind the
+research are left out.
+
+```json
+{
+  "gedcom": "my-tree.ged",
+  "title": "My Family Tree",
+  "out": "site-public",
+  "anonymizeLiving": true,
+  "citations": false,
+  "notes": false
+}
+```
+
+Each setting stands alone, so a public site can still show citations or notes. Turning
+`citations` or `notes` on never reveals a living person: with `anonymizeLiving`, their
+notes and citations are withheld whatever these say.
 
 Everything in `sample/` is invented: names, places, dates, numbers and addresses.
 
