@@ -200,6 +200,9 @@ const EVIDENCE = `0 HEAD
 2 NOTE @N1@
 2 SOUR @S1@
 3 NOTE @N2@
+3 DATA
+4 TEXT Laid to rest
+4 TEXT beside Briony
 0 @N1@ NOTE Shared notes are not read
 0 @S1@ SOUR
 1 TITL Quill family Bible
@@ -227,9 +230,29 @@ test('event notes and citations stay with their event; the first of repeated eve
   assert.deepEqual(p.notes, ['Person note'])
 })
 
+test('birth and death summaries come from the first version with a date', () => {
+  const { indi } = parseGedcom(`0 @I1@ INDI
+1 BIRT
+2 PLAC Marrowby
+1 BIRT
+2 DATE 1841
+1 DEAT Y
+1 DEAT
+2 DATE
+3 PHRASE the hard winter
+0 @I2@ INDI
+1 DEAT Y
+1 DEAT Y
+`)
+  const [a, b] = [indi.get('I1'), indi.get('I2')]
+  assert.equal(a.birt, a.events[1])
+  assert.equal(a.deat, a.events[3])
+  assert.equal(b.deat, b.events[0])
+})
+
 test('a NOTE that points to a shared note record is skipped, not shown as its pointer', () => {
   const p = parseGedcom(EVIDENCE).indi.get('I1')
-  assert.deepEqual(p.events[2], { tag: 'BURI', val: '', sources: [cite('Quill family Bible')] })
+  assert.deepEqual(p.events[2], { tag: 'BURI', val: '', sources: [cite('Quill family Bible', '', 'Laid to rest\nbeside Briony')] })
   assert.deepEqual(parseGedcom('0 @I1@ INDI\n1 NOTE @@N1@ is how a note starts with an at sign\n').indi.get('I1').notes,
     ['@N1@ is how a note starts with an at sign'])
 })
