@@ -72,6 +72,16 @@ test('citations default to shown and can be turned off', () => {
   fs.rmSync(a.dir, { recursive: true })
 })
 
+test('anonymizeLiving, citations and notes must be true or false', () => {
+  for (const key of ['anonymizeLiving', 'citations', 'notes']) {
+    for (const bad of ['false', 'no', 0, null]) {
+      const a = configFile({ gedcom: 'x.ged', [key]: bad })
+      assert.throws(() => loadConfig(a.file), new RegExp(`${key} must be true or false`))
+      fs.rmSync(a.dir, { recursive: true })
+    }
+  }
+})
+
 test('notes default to shown and can be turned off', () => {
   assert.equal(DEFAULTS.notes, true)
   const a = configFile({ gedcom: 'x.ged' })
