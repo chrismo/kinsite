@@ -195,6 +195,12 @@ const EVIDENCE = `0 HEAD
 1 SOUR Told by Aunt Wenna
 2 CONT at the fair
 1 NOTE Person note
+1 NOTE @N1@
+1 BURI
+2 NOTE @N1@
+2 SOUR @S1@
+3 NOTE @N2@
+0 @N1@ NOTE Shared notes are not read
 0 @S1@ SOUR
 1 TITL Quill family Bible
 1 AUTH not read
@@ -210,7 +216,7 @@ const cite = (title, page = '', text = '', notes = []) => ({ title, page, text, 
 
 test('event notes and citations stay with their event; the first of repeated events is the preferred one', () => {
   const p = parseGedcom(EVIDENCE).indi.get('I1')
-  assert.deepEqual(p.events, [
+  assert.deepEqual(p.events.slice(0, 2), [
     { tag: 'DEAT', val: '', date: '3 MAR 1901', plac: 'Fernhollow, Wexmoor',
       notes: ['The family Bible says March;\nthe stone may have been recut.'],
       sources: [cite('Quill family Bible', 'p. 12', 'Abner Quill,\nd. 3rd March 1901', ['Ink faded.'])] },
@@ -219,6 +225,13 @@ test('event notes and citations stay with their event; the first of repeated eve
   ])
   assert.equal(p.deat, p.events[0])
   assert.deepEqual(p.notes, ['Person note'])
+})
+
+test('a NOTE that points to a shared note record is skipped, not shown as its pointer', () => {
+  const p = parseGedcom(EVIDENCE).indi.get('I1')
+  assert.deepEqual(p.events[2], { tag: 'BURI', val: '', sources: [cite('Quill family Bible')] })
+  assert.deepEqual(parseGedcom('0 @I1@ INDI\n1 NOTE @@N1@ is how a note starts with an at sign\n').indi.get('I1').notes,
+    ['@N1@ is how a note starts with an at sign'])
 })
 
 test('citations on the person and on the shown name are person sources; dangling and void ones keep their page', () => {

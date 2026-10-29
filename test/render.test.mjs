@@ -303,6 +303,8 @@ test('a repeat with nothing to show is not counted as a version', () => {
   const text = events => evidence(r.eventsHtml({ events }))
   assert.deepEqual(text([{ tag: 'BURI', val: '' }, { tag: 'BURI', val: '', plac: 'Saltmere' }]), ['Buried Saltmere'])
   assert.deepEqual(text([{ tag: 'CHR', val: '', date: '1891' }, { tag: 'CHR', val: '', plac: '?' }]), ['Christened 1891'])
+  assert.deepEqual(text([{ tag: 'DEAT', val: 'Y' }, { tag: 'DEAT', val: '', date: '1911' }]), ['Died 1911'])
+  assert.deepEqual(text([{ tag: 'BIRT', val: '' }, { tag: 'BIRT', val: '', plac: '?' }]), ['Born date unknown'])
 })
 
 test('event notes and citations show under their event, numbered, with contact details redacted', () => {

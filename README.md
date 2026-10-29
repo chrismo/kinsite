@@ -50,8 +50,8 @@ When a GEDCOM records a birth, christening, baptism, death or burial more than o
 the person page shows every version together: the first as preferred and the rest as
 alternates, the order GEDCOM 7 uses for preference. Under each event come its notes
 and citations, numbered: source title, page, and the quoted text of the record.
-Citations on the person record or on their name are listed under Sources at the foot
-of the page.
+Citations on the person record or on the name shown (the first `NAME`) are listed
+under Sources at the foot of the page.
 
 ## Goals
 
