@@ -19,8 +19,23 @@
 1 DEAT
 2 DATE ABT 1910
 2 PLAC Marrowby, Tansy Shire, Westmarch
+2 NOTE The family Bible gives the winter of 1910; the stone in Saltmere reads
+3 CONT 1911 and may have been recut.
+2 SOUR @S1@
+3 PAGE p. 12
+3 DATA
+4 TEXT Abner Quill, wheelwright, went to his rest in the deep snow of 1910
+1 DEAT
+2 DATE 1911
+2 PLAC Saltmere, Tansy Shire, Westmarch
+2 SOUR @S2@
+3 PAGE Plot 14
 1 BURI
 2 PLAC Saltmere churchyard
+2 SOUR @S2@
+3 PAGE Plot 14
+1 SOUR @S3@
+2 PAGE Marrowby, 1851, sheet 4
 1 FAMS @F1@
 0 @I2@ INDI
 1 NAME Briony /Thistle/
@@ -187,4 +202,10 @@
 1 FILE media/gideon.png
 2 FORM image/png
 2 TITL Gideon at the workbench (placeholder image)
+0 @S1@ SOUR
+1 TITL Quill family Bible
+0 @S2@ SOUR
+1 TITL Saltmere churchyard survey
+0 @S3@ SOUR
+1 TITL Census of Westmarch
 0 TRLR
