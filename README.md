@@ -230,6 +230,12 @@ GEDCOM, under the same privacy settings as the rest of the page. The build log s
 variable, never a config key, so a deploy can't publish the preview by accident; and
 with the recipe below (stamp, then build) nothing is pending at deploy anyway.
 
+**Updated notes.** A person page shows "Updated 14 Nov 2026" under the name, linking to
+that deploy on the page (`whats-new.html#2026-11-14`). The date is the latest deploy that,
+under this build's rules, lists a change under the person or has an entry mentioning
+them, so a line that isn't shown can't date-stamp a page. Private people never get the
+note, entries not yet stamped don't count, and the note doesn't age out.
+
 **A deploy recipe.** kinsite never touches git; this is one way to run it:
 
 1. Get the GEDCOM that's live now, as `old.ged`.
