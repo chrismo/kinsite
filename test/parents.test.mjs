@@ -193,3 +193,12 @@ test('the build logs one-sided links', () => {
   fs.rmSync(dir, { recursive: true })
   assert.deepEqual(lines.filter(s => s.includes('warning')), ['  warning: I2 FAMC @F2@ has no matching CHIL in F2'])
 })
+
+test('a PEDI OTHER PHRASE is escaped wherever it is shown', () => {
+  const ged = withAda('1 FAMC @F1@\n1 FAMC @F2@\n2 PEDI OTHER\n3 PHRASE <img src=x onerror=alert(1)>\n')
+  for (const id of ['I1', 'I4']) {
+    const html = site(ged).page(id)
+    assert.doesNotMatch(html, /<img src=x/, `${id} page`)
+    assert.match(html, /&lt;img src=x onerror=alert\(1\)&gt;/, `${id} page`)
+  }
+})
