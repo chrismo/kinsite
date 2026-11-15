@@ -234,7 +234,9 @@ with the recipe below (stamp, then build) nothing is pending at deploy anyway.
 that deploy on the page (`whats-new.html#2026-11-14`). The date is the latest deploy that,
 under this build's rules, lists a change under the person or has an entry mentioning
 them, so a line that isn't shown can't date-stamp a page. Private people never get the
-note, entries not yet stamped don't count, and the note doesn't age out.
+note, entries not yet stamped don't count, and the note doesn't age out. Changes still
+pending don't mark a page yet; a "Changed since last deploy" note for the `SINCE`
+preview (#18) is still to come.
 
 **A deploy recipe.** kinsite never touches git; this is one way to run it:
 
