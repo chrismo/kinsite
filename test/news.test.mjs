@@ -72,9 +72,9 @@ function project({ ged = OLD, news = {}, config = {} } = {}) {
     if (ged) fs.writeFileSync(path.join(dir, 'tree.ged'), ged)
     return stampNews(loadConfig(file), path.join(dir, 'old.ged'), { today: new Date(today), log: () => {} })
   }
-  const build = (overrides = {}) => {
+  const build = (overrides = {}, opts = {}) => {
     const lines = []
-    buildSite(loadConfig(file, overrides), { log: s => lines.push(s) })
+    buildSite(loadConfig(file, overrides), { log: s => lines.push(s), ...opts })
     const out = path.resolve(dir, overrides.out ?? 'site')
     return { lines, page: f => fs.readFileSync(path.join(out, f), 'utf8'), has: f => fs.existsSync(path.join(out, f)) }
   }
@@ -384,5 +384,72 @@ test('kinsite news stamp config old.ged writes today\'s changes file', () => {
   assert.equal(execFileSync('node', [BIN, 'news', 'stamp', 'kinsite.config.json', 'tree.ged'], { cwd: p.dir, encoding: 'utf8' }),
     'Nothing to stamp: no changes and no new entries.\n')
   assert.ok(!fs.existsSync(path.join(p.dir, 'site')), 'stamping builds nothing')
+  p.done()
+})
+
+const since = p => ({ since: path.join(p.dir, 'old.ged') })
+
+test('with SINCE, a Not yet published section at the top holds the unstamped entries and a fresh diff', () => {
+  const p = project({ news: { 'two-adas.md': '# The two Ada Fenwicks\n\nOn @I1@.\n' } })
+  p.stamp('2026-11-14T12:00', edit(OLD, '2 DATE 1830', '2 DATE 1831'))
+  fs.copyFileSync(path.join(p.dir, 'tree.ged'), path.join(p.dir, 'old.ged'))
+  p.write('news/pell-family.md', '# The Pells\n\nAbout @I9@.\n')
+  p.write('news/kit.md', 'Kit.\n')
+  p.write('tree.ged', edit(edit(OLD, '2 DATE 1830', '2 DATE 1831'), '2 DATE 1859', '2 DATE ABT 1858'))
+
+  const { lines, page } = p.build({}, since(p))
+  assert.ok(lines.includes('  news        : 1 deploy, 2 entries not yet stamped'))
+  assert.ok(lines.includes(`  news        : previewing changes since ${path.join(p.dir, 'old.ged')}`))
+  const html = page('whats-new.html')
+  const at = s => {
+    assert.ok(html.includes(s), s)
+    return html.indexOf(s)
+  }
+  assert.ok(at('<h2 id=pending>Not yet published</h2>') < at('Kit.'))
+  assert.ok(at('Kit.') < at('The Pells'), 'file-name order')
+  assert.ok(at('About <a href="I9.html">Jonas Pell</a>') < at('Changed birth date from 1859 to about 1858'))
+  assert.ok(at('Changed birth date from 1859 to about 1858') < at('14 November 2026'))
+  assert.ok(at('14 November 2026') < at('The two Ada Fenwicks'))
+  assert.equal(html.match(/Changed birth date from 1830 to 1831/g).length, 1, 'the preview diffs against SINCE, not the last deploy')
+
+  assert.doesNotMatch(p.build().page('whats-new.html'), /Not yet published|The Pells|about 1858/, 'only with SINCE')
+  p.done()
+})
+
+test('the preview follows this build\'s privacy rules', () => {
+  const p = project({ news: { 'wren.md': 'Found @I7@.\n' } })
+  p.write('tree.ged', edit(edit(OLD, '2 DATE 1990', '2 DATE 1991'), '2 DATE 1830', '2 DATE 1831'))
+  assert.match(p.build({}, since(p)).page('whats-new.html'), /Found <a href="I7\.html">Wren Fenwick<\/a>.*Wren Fenwick \(I7\)/)
+  const pub = p.build({ anonymizeLiving: true }, since(p)).page('whats-new.html')
+  assert.doesNotMatch(pub, /Wren|I7/)
+  assert.match(pub, /Found Private\..*Mara Quill \(I3\)/)
+  p.done()
+})
+
+test('with SINCE and nothing pending, the section says so', () => {
+  const p = project()
+  const html = p.build({}, since(p)).page('whats-new.html')
+  assert.match(html, /<h2 id=pending>Not yet published<\/h2><p class=sub>Nothing yet\.<\/p>/)
+  assert.equal(html.match(/Nothing yet/g).length, 1)
+  p.done()
+})
+
+test('SINCE needs news in the config, an old GEDCOM that exists, and xrefs that were not renumbered', () => {
+  const p = project()
+  p.write('bare.json', JSON.stringify({ gedcom: 'tree.ged' }))
+  assert.throws(() => buildSite(loadConfig(path.join(p.dir, 'bare.json')), { log: () => {}, ...since(p) }), /SINCE.*"news"/)
+  assert.throws(() => p.build({}, { since: path.join(p.dir, 'nope.ged') }), /GEDCOM not found: .*nope\.ged/)
+  p.write('tree.ged', OLD.replace(/@I(\d)@/g, '@P$1@'))
+  assert.throws(() => p.build({}, since(p)), /xrefs look renumbered/)
+  p.write('since.json', JSON.stringify({ gedcom: 'tree.ged', news: 'news', since: 'old.ged' }))
+  assert.throws(() => loadConfig(path.join(p.dir, 'since.json')), /unknown config key: since/, 'SINCE is never a config key')
+  p.done()
+})
+
+test('SINCE=old.ged kinsite config builds the preview', () => {
+  const p = project({ ged: edit(OLD, '2 DATE 1830', '2 DATE 1831'), news: { 'mara.md': 'Mara.\n' } })
+  const out = execFileSync('node', [BIN, 'kinsite.config.json'], { cwd: p.dir, encoding: 'utf8', env: { ...process.env, SINCE: 'old.ged' } })
+  assert.match(out, /^ {2}news {8}: previewing changes since old\.ged$/m)
+  assert.match(fs.readFileSync(path.join(p.dir, 'site', 'whats-new.html'), 'utf8'), /Not yet published.*Mara\..*Changed birth date from 1830 to 1831/)
   p.done()
 })
