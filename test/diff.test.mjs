@@ -141,6 +141,9 @@ test('which version is preferred', () => {
   const old = adaGets('1 BIRT\n2 DATE ABT 1858\n')
   const cur = edit(OLD, '1 BIRT\n2 DATE 1859\n2 PLAC Marrowby\n', '1 BIRT\n2 DATE ABT 1858\n1 BIRT\n2 DATE 1859\n2 PLAC Marrowby\n')
   assert.equal(changes(old, cur), 'Ada Fenwick (I1)\n  Preferred birth is now about 1858, not 1859, Marrowby')
+  assert.equal(changes(old, cur, PUBLIC), 'Ada Fenwick (I1)\n  Preferred birth is now about 1858', 'with anonymizeLiving, the old version is not quoted')
+  const hidden = edit(OLD, '2 PLAC Marrowby\n1 FAMC', '2 PLAC Marrowby\n2 RESN PRIVACY\n1 BIRT\n2 DATE 1860\n2 PLAC Kettleby\n1 FAMC')
+  assert.equal(changes(OLD, hidden), 'Ada Fenwick (I1)\n  Added: birth 1860, Kettleby', 'a version that became restricted is not named')
 })
 
 test('RESN: restricted versions never appear, and becoming restricted gives no line', () => {
@@ -152,6 +155,9 @@ test('RESN: restricted versions never appear, and becoming restricted gives no l
   assert.equal(changes(hiddenBurial, edit(hiddenBurial, '2 RESN PRIVACY\n', '2 RESN PRIVACY\n2 NOTE Family plot\n2 SOUR @S1@\n')), 'No changes.',
     'notes and citations of a restricted version')
   assert.equal(changes(restrict, OLD), 'Ada Fenwick (I1)\n  Added: birth 1859, Marrowby', 'a lifted restriction shows the version')
+  const secret = edit(restrict, '2 RESN PRIVACY\n', '2 RESN CONFIDENTIAL\n2 NOTE Born out of wedlock\n2 SOUR @S1@\n3 PAGE 12\n')
+  assert.equal(changes(secret, OLD), 'Ada Fenwick (I1)\n  Added: birth 1859, Marrowby', 'notes and citations of a formerly restricted version')
+  assert.equal(changes(secret, OLD, PUBLIC), 'Ada Fenwick (I1)\n  Added: birth 1859, Marrowby')
 })
 
 test('names', () => {
