@@ -7,6 +7,7 @@ import { execFileSync } from 'node:child_process'
 import { markdown, stampNews, readNews } from '../lib/news.mjs'
 import { loadConfig } from '../lib/config.mjs'
 import { buildSite } from '../lib/build.mjs'
+import { parseGedcom } from '../lib/gedcom.mjs'
 
 // Invented. Ada married Jonas Pell; Tobias and Mara are her parents; Wren is a living granddaughter.
 const OLD = `0 @I1@ INDI
@@ -248,6 +249,43 @@ test('a person later found to be living, or a fact later marked RESN, drops out 
   p.done()
 })
 
+// Deploy 1 adds Ada's death and her marriage date, and a note on Tobias's death.
+const FACTS = edit(edit(edit(OLD, '2 PLAC Marrowby\n', '2 PLAC Marrowby\n1 DEAT\n2 DATE 1920\n2 PLAC Brackenmoor\n'),
+  '1 DEAT\n2 DATE 1890\n', '1 DEAT\n2 DATE 1890\n2 NOTE Died at the mill.\n'),
+'1 WIFE @I1@\n', '1 WIFE @I1@\n1 MARR\n2 DATE 1880\n2 PLAC Hollin Cross\n')
+
+function stampAll(p, ...geds) {
+  for (const ged of geds) {
+    p.stamp(`2026-11-${14 + p.ls().length}T12:00`, ged)
+    fs.copyFileSync(path.join(p.dir, 'tree.ged'), path.join(p.dir, 'old.ged'))
+  }
+  return p.build().page('whats-new.html')
+}
+
+test('a fact edited and marked RESN in one deploy drops out of the earlier deploys that showed it', () => {
+  const p = project()
+  const before = stampAll(p, FACTS)
+  for (const s of ['death 1920, Brackenmoor', 'Died at the mill', 'Hollin Cross']) assert.ok(before.includes(s), s)
+  const restricted = edit(edit(edit(FACTS, '2 DATE 1920\n2 PLAC Brackenmoor\n', '2 DATE 1921\n2 PLAC Brackenmoor\n2 RESN PRIVACY\n'),
+    '2 DATE 1890\n2 NOTE Died at the mill.\n', '2 DATE 1890\n2 PLAC Oak Hill\n2 NOTE Died at the mill.\n2 RESN PRIVACY\n'),
+  '2 DATE 1880\n2 PLAC Hollin Cross\n', '2 DATE 1881\n2 PLAC Hollin Cross\n2 RESN PRIVACY\n')
+  const html = stampAll(p, restricted)
+  assert.doesNotMatch(html, /Brackenmoor|1920|Died at the mill|Oak Hill|Hollin Cross|1881/)
+  p.done()
+})
+
+test('a fact marked RESN and later deleted stays out of the earlier deploys that showed it', () => {
+  const p = project()
+  const restricted = edit(edit(FACTS, '2 PLAC Brackenmoor\n', '2 PLAC Brackenmoor\n2 RESN PRIVACY\n'),
+    '2 PLAC Hollin Cross\n', '2 PLAC Hollin Cross\n2 RESN CONFIDENTIAL\n')
+  const deleted = edit(edit(restricted, '1 DEAT\n2 DATE 1920\n2 PLAC Brackenmoor\n2 RESN PRIVACY\n', ''),
+    '1 MARR\n2 DATE 1880\n2 PLAC Hollin Cross\n2 RESN CONFIDENTIAL\n', '')
+  const html = stampAll(p, FACTS, restricted, deleted)
+  assert.doesNotMatch(html, /Brackenmoor|Hollin Cross/)
+  assert.match(html, /Died at the mill/, 'other facts still show')
+  p.done()
+})
+
 test('a deploy with no narrative shows only its date and changes; one with nothing left to show is left off', () => {
   const p = project()
   p.stamp('2026-11-14T12:00', edit(OLD, '2 DATE 1830', '2 DATE 1831'))
@@ -283,6 +321,23 @@ test('a person added and later removed is still named in the earlier deploy, wit
   p.stamp('2026-11-20T12:00', OLD)
   const html = p.build().page('whats-new.html')
   assert.match(html, /<li>Removed: Kit Fenwick \(I8\)<\/li>.*<li>Added: Kit Fenwick \(I8\)<\/li>/)
+  p.done()
+})
+
+test('a person removed more than once is described from the newest snapshot, so a later living finding hides them', () => {
+  const kit = (name, events) => parseGedcom(`0 @I8@ INDI\n1 NAME ${name}\n${events}0 TRLR\n`).indi.get('I8')
+  const deploy = (date, changes) => JSON.stringify({ date, entries: [], changes })
+  const p = project({
+    news: {
+      '2026-01-01.changes.json': deploy('2026-01-01', [{ kind: 'person', op: 'removed', id: 'I8',
+        was: kit('Kit /Old/', '1 BIRT\n2 DATE 1800\n1 DEAT\n2 DATE 1850\n') }]),
+      '2026-02-01.changes.json': deploy('2026-02-01', [{ kind: 'person', op: 'added', id: 'I8' }]),
+      '2026-03-01.changes.json': deploy('2026-03-01', [{ kind: 'person', op: 'removed', id: 'I8',
+        was: kit('Kit /Living/', '1 BIRT\n2 DATE 1990\n') }]),
+    },
+  })
+  assert.doesNotMatch(p.build({ anonymizeLiving: true }).page('whats-new.html'), /Kit/)
+  assert.doesNotMatch(p.build().page('whats-new.html'), /Kit Old/)
   p.done()
 })
 
