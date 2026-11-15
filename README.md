@@ -95,6 +95,25 @@ quoted text of the record. Citations on the person record or on the name shown a
 listed under Sources at the foot of the page. Marriages don't show notes or citations
 yet.
 
+## Parent families
+
+A person listed as a child in more than one family (several `FAMC`) gets one main
+parent family: the first `FAMC` in file order not marked `STAT DISPROVEN`. `PROVEN`
+is shown as a label but doesn't reorder anything. Parents, Siblings, the chart and the
+"Path to" breadcrumb all use the main family. The other families are listed under
+Parents as "Also listed as a child of …", labeled with their `PEDI` (adopted, foster,
+birth, or the `PHRASE` of `PEDI OTHER`) and `STAT`; the main family gets a label too
+when it has a `PEDI` other than `BIRTH`, or a `STAT`. On those other parents' pages the
+child is listed with a pointer to the main parents.
+
+With `anonymizeLiving`, `DISPROVEN` families are left out, and a living person appears
+only in their main family, with no `PEDI` or `STAT`.
+
+The build warns about links recorded on one side only, such as a `FAMC` with no
+matching `CHIL`, a `CHIL` with no `FAMC`, or the same for `FAMS` and `HUSB`/`WIFE`:
+`warning: F2 CHIL @I7@ has no matching FAMC in I7`. A one-sided child link is
+treated as if both sides recorded it.
+
 ## Goals
 
 - **Static output only.** No server, no database. JavaScript in the browser is fine,
