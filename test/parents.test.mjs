@@ -157,7 +157,7 @@ test('with anonymizeLiving a Private person keeps only the main family, with no 
   for (const id of ['I1', 'I2', 'I3', 'I4', 'I5']) assert.doesNotMatch(s.page(id), /adopted|birth|Also listed|main parents/i)
 })
 
-test('one-sided family links are warned about and the child side is joined up', () => {
+test('one-sided family links are warned about and left as recorded', () => {
   const ged = `0 @I1@ INDI
 1 FAMC @F1@
 1 FAMS @F2@
@@ -178,9 +178,10 @@ test('one-sided family links are warned about and the child side is joined up', 
     'F1 WIFE @I2@ has no matching FAMS in I2',
     'F1 CHIL @I2@ has no matching FAMC in I2',
   ])
-  assert.deepEqual(fam.get('F1').chil, ['I2', 'I1'])
-  assert.deepEqual(indi.get('I2').parentFams, [{ fam: 'F1', pedi: '', phrase: '', stat: '' }])
-  assert.equal(indi.get('I2').famc, 'F1')
+  assert.deepEqual(fam.get('F1').chil, ['I2'], 'no CHIL is added for a FAMC-only link')
+  assert.deepEqual(indi.get('I2').parentFams, [], 'no FAMC is added for a CHIL-only link')
+  assert.equal(indi.get('I2').famc, null)
+  assert.equal(indi.get('I1').famc, 'F1')
   assert.deepEqual(parseGedcom(ADA).warnings, [])
 })
 
@@ -201,4 +202,15 @@ test('a PEDI OTHER PHRASE is escaped wherever it is shown', () => {
     assert.doesNotMatch(html, /<img src=x/, `${id} page`)
     assert.match(html, /&lt;img src=x onerror=alert\(1\)&gt;/, `${id} page`)
   }
+})
+
+test('a FAMC pointing at a missing family is never the main family', () => {
+  const ged = withAda('1 FAMC @F9@\n1 FAMC @F1@\n')
+  const s = site(ged)
+  assert.equal(s.indi.get('I1').famc, 'F1')
+  const parents = text(section(s.page('I1'), 'Parents'))
+  assert.match(parents, /^ParentsTobias Fenwick \(1825–\)Mara Quill \(1830–\)$/)
+  assert.match(text(s.page('I1')), /Ada Fenwick \(1859–\) ↑ Mara Quill/)
+  assert.doesNotMatch(text(s.page('I2')), /main parents/)
+  assert.ok(parseGedcom(ged).warnings.includes('I1 FAMC @F9@ has no matching CHIL in F9'))
 })

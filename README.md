@@ -98,7 +98,8 @@ yet.
 ## Parent families
 
 A person listed as a child in more than one family (several `FAMC`) gets one main
-parent family: the first `FAMC` in file order not marked `STAT DISPROVEN`. `PROVEN`
+parent family: the first `FAMC` in file order that points at a family in the file and isn't marked
+`STAT DISPROVEN`. `PROVEN`
 is shown as a label but doesn't reorder anything. Parents, Siblings, the chart and the
 "Path to" breadcrumb all use the main family. The other families are listed under
 Parents as "Also listed as a child of …", labeled with their `PEDI` (adopted, foster,
@@ -111,8 +112,10 @@ only in their main family, with no `PEDI` or `STAT`.
 
 The build warns about links recorded on one side only, such as a `FAMC` with no
 matching `CHIL`, a `CHIL` with no `FAMC`, or the same for `FAMS` and `HUSB`/`WIFE`:
-`warning: F2 CHIL @I7@ has no matching FAMC in I7`. A one-sided child link is
-treated as if both sides recorded it.
+`warning: F2 CHIL @I7@ has no matching FAMC in I7`. kinsite doesn't fill in the
+missing side: each page shows what its own record says, so the child's Parents come
+from its `FAMC` and the parents' children come from the family's `CHIL`. Fix the file
+to make them agree.
 
 ## Goals
 
@@ -135,6 +138,10 @@ treated as if both sides recorded it.
   whole tree shrunk until the text is useless.
 - **Works on a phone.**
 - **Stable URLs.** A person keeps the same page address across rebuilds.
+- **Show the file as recorded.** kinsite never adds a relationship or fact the GEDCOM
+  doesn't state. When the file contradicts itself or is ambiguous, it shows what each
+  record says, labeled where GEDCOM provides labels, and the build log warns. Fixing
+  the data is the owner's call, not the generator's.
 
 ## Contributing
 
