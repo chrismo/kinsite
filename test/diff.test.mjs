@@ -346,3 +346,13 @@ test('kinsite diff config old.ged prints the change list; kinsite never builds o
   assert.match(missing.stderr, /GEDCOM not found: nope\.ged/)
   fs.rmSync(dir, { recursive: true })
 })
+
+test('which side of the file records a parent link is not a change', () => {
+  const both = edit(OLD, '1 CHIL @I2@\n', '1 CHIL @I2@\n1 CHIL @I1@\n', '1 FAMC @F1@\n1 FAMS', '1 FAMC @F1@\n1 FAMC @F2@\n1 FAMS')
+  const familyOnly = edit(both, '1 FAMC @F2@\n', '')
+  assert.equal(changes(familyOnly, both), 'No changes.')
+  assert.equal(changes(both, familyOnly), 'No changes.')
+  const childOnly = edit(both, '1 CHIL @I2@\n1 CHIL @I1@\n', '1 CHIL @I2@\n')
+  assert.equal(changes(childOnly, edit(childOnly, '1 FAMC @F2@\n', '1 FAMC @F2@\n2 PEDI ADOPTED\n')),
+    'Ada Fenwick (I1)\n  Relabeled as a child of Silas Fenwick and Hester Lowe from no label to adopted')
+})
