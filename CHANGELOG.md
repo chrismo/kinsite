@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.4.0
+
+- **What's new page.** Set `"news": "news"` in the config and write short
+  Markdown entries about each batch of research in that folder, mentioning people
+  as `@I12@`. `whats-new.html` shows them newest first, each followed by a
+  plain-language list of what changed on the site. The change list is rebuilt on
+  every build under that build's privacy settings, so one `news/` folder can feed
+  a research site and a public site. (#17)
+- **`kinsite news stamp config.json old.ged`** saves the changes since `old.ged`
+  at deploy time, so the history doesn't need old GEDCOMs. kinsite never touches
+  git; the README gives a deploy recipe. (#17)
+- **`kinsite diff config.json old.ged`** prints that change list in the terminal,
+  grouped by person, to read before deploying. It stops if the person IDs look
+  renumbered. (#16)
+- **Preview before deploying.** Build with `SINCE=old.ged` to add a "Not yet
+  published" section to What's new. `npm run dev` now takes a config path. (#18)
+- **"Updated" note** under a person's name, linking to the latest deploy that
+  changed or mentioned them; with `SINCE`, a "Changed since last deploy" link
+  too. (#19)
+- **Every parent family.** A child listed in more than one family (several
+  `FAMC`) used to get the last one as Parents, and the page could contradict
+  itself. Now the first `FAMC` not marked `DISPROVEN` is the main family, used by
+  Parents, Siblings, the chart and the "Path to" line. The others are listed as
+  "Also listed as a child of …", labeled with `PEDI` (adopted, foster, …) and
+  `STAT` (challenged, proven, disproven). With `anonymizeLiving`, disproven
+  families are left out and Private people show only their main family. (#15)
+- **One-sided family links** (a `FAMC` with no matching `CHIL`, or the reverse,
+  and the same for spouses) are warned about in the build log. A child link
+  recorded on one side still shows on both, labeled "on the family record only"
+  or "on the child's record only". (#15)
+- **Citations keep their source's ID**, so renaming a source record doesn't
+  count as changing every citation to it. (#16)
+
 ## 0.3.0
 
 - **Alternate facts.** When a birth, christening, baptism, death or burial is
