@@ -15,6 +15,7 @@ node build.mjs sample/kinsite.config.json   # build the fictional sample tree in
 open site/index.html
 npm run dev                                  # preview the sample at http://localhost:4000 (PORT=... to change); rebuilds and reloads on edits
 node build.mjs diff sample/kinsite.config.json old.ged   # what changed on the site since old.ged (see "What changed")
+node build.mjs news stamp kinsite.config.json old.ged    # record a deploy's changes for the What's new page (see "What's new")
 npm test
 ```
 
@@ -40,6 +41,7 @@ For your own tree, write a `kinsite.config.json` next to your GEDCOM:
 | `anonymizeLiving` | Show living people only as "Private", for a public site (see Goals)           | `false`                |
 | `citations`       | Show source citations on person pages; event notes follow `notes`             | `true`                 |
 | `notes`           | Show person and event notes; a citation's own notes go with the citation       | `true`                 |
+| `news`            | Directory of What's new entries and stamped changes (see "What's new")        | unset: no page         |
 
 Relative paths resolve against the config file's directory. `FOCUS=I3` or `OUT=dir` in
 the environment override the config for one run. The build log says what was
@@ -161,6 +163,67 @@ Most of this rests on xrefs staying the same, as stable URLs already do. If more
 half of `old.ged`'s people are missing from the new file, the command stops with
 `error: xrefs look renumbered` rather than reporting the whole tree as removed and
 re-added.
+
+## What's new
+
+Set `"news": "news"` in the config to publish a `whats-new.html` page that relatives
+can read: what you worked on, in your own words, then what changed on the site, with
+links to the people. The index links to it. With `news` unset, nothing changes.
+
+**Entries.** Each `.md` file in the directory is one entry, written while doing the
+research. Mention people by xref:
+
+```
+# The two Ada Fenwicks
+
+Sorted out the two Adas in Marrowby. @I1@ is the one who married
+@I9@; the *other* Ada was her cousin. See https://example.org/marrowby-1880.
+```
+
+Entries use a small subset of Markdown: an optional `# Title` first line, paragraphs
+separated by a blank line, `*emphasis*`, `**strong**`, `[text](https://…)` links and
+bare http(s) URLs, and `@I12@` mentions. Anything else, raw HTML included, shows as
+plain text, and only http(s) links become links. All text is redacted as on the site.
+A mention links to the person, or reads "Private" with no link when they are Private
+in this build; a mention of an xref that isn't in the tree is left as written, and the
+build warns. An entry is free text, though: like a note, it can still name a living
+person in words, and nothing hides that.
+
+**Stamping a deploy.** `kinsite news stamp kinsite.config.json old.ged` runs the "What
+changed" diff between `old.ged` and the config's GEDCOM and writes one file per deploy,
+such as `news/2026-11-14.changes.json` (`-2`, `-3`, … for later deploys that day):
+
+```json
+{ "date": "2026-11-14", "entries": ["pell-family", "two-adas"], "changes": [ … ] }
+```
+
+Every entry not yet listed in a changes file is included, so entries written during one
+round of research share one change list. A deploy with changes but no entry still gets a
+file, and shows on the page with only its date. With no changes and no new entries, the
+command writes nothing. Entries are never edited; whether one is waiting is decided by
+the changes files. To drop a line, delete its record from `changes`; to reword
+something, say it in an entry.
+
+**The page.** Deploys are listed newest first: the date, the entries in file-name order,
+then the change list. The sentences are written at each build from the stored records,
+under that build's privacy settings, as `kinsite diff` would, so one `news/` directory
+can feed a research site and a public site. A person later found to be living, or a fact
+later marked `RESN PRIVACY` or `CONFIDENTIAL`, drops out of past deploys on the next
+rebuild, and a deploy left with nothing to show is left off. Entries not yet stamped
+aren't shown. The build log says, for example,
+`news        : 4 deploys, 2 entries not yet stamped`.
+
+**A deploy recipe.** kinsite never touches git; this is one way to run it:
+
+1. Get the GEDCOM that's live now, as `old.ged`.
+2. `kinsite news stamp kinsite.config.json old.ged`
+3. Build.
+4. Commit `news/`.
+5. Deploy.
+6. Record the GEDCOM you just deployed as the new live version.
+
+Links to individual facts aren't possible: a fact has no ID that survives a rebuild.
+Marriage notes and citations aren't covered, as in "What changed".
 
 ## Goals
 
