@@ -41,7 +41,8 @@ test('anonymize swaps living people for Private stubs, keeps relationships, and 
   assert.equal(a.indi.get('I1'), indi.get('I1'))
   assert.deepEqual(a.indi.get('I2'), {
     id: 'I2', name: 'Private', surn: '', giv: '', sex: '', private: true,
-    birt: {}, deat: {}, events: [], famc: 'F1', fams: ['F2'], media: [], notes: [], sources: [],
+    birt: {}, deat: {}, events: [], famc: 'F1', parentFams: [{ fam: 'F1', pedi: '', phrase: '', stat: '' }],
+    fams: ['F2'], media: [], notes: [], sources: [],
   })
   assert.equal(a.fam.get('F1'), fam.get('F1'))
   assert.deepEqual(a.fam.get('F2'), { id: 'F2', husb: 'I2', wife: null, chil: [], marr: {} })

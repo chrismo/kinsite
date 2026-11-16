@@ -95,6 +95,30 @@ quoted text of the record. Citations on the person record or on the name shown a
 listed under Sources at the foot of the page. Marriages don't show notes or citations
 yet.
 
+## Parent families
+
+A person listed as a child in more than one family (several `FAMC`) gets one main
+parent family: the first `FAMC` in file order that points at a family in the file and isn't marked
+`STAT DISPROVEN`. `PROVEN`
+is shown as a label but doesn't reorder anything. Parents, Siblings, the chart and the
+"Path to" breadcrumb all use the main family. The other families are listed under
+Parents as "Also listed as a child of …", labeled with their `PEDI` (adopted, foster,
+birth, or the `PHRASE` of `PEDI OTHER`) and `STAT`; the main family gets a label too
+when it has a `PEDI` other than `BIRTH`, or a `STAT`. On those other parents' pages the
+child is listed with a pointer to the main parents.
+
+With `anonymizeLiving`, `DISPROVEN` families are left out, and a living person appears
+only in their main family, with no `PEDI` or `STAT`.
+
+The build warns about links recorded on one side only, such as a `FAMC` with no
+matching `CHIL`, a `CHIL` with no `FAMC`, or the same for `FAMS` and `HUSB`/`WIFE`:
+`warning: F2 CHIL @I7@ has no matching FAMC in I7`. A child link recorded on one side
+still shows on both, labeled with the side that recorded it ("on the family record only"
+or "on the child's record only"), so the child stays in the chart and the "Path to"
+line. A child's own `FAMC` comes before a link found only on a family's `CHIL` when
+choosing the main family. Add the missing line to the file to clear the label and the
+warning.
+
 ## Goals
 
 - **Static output only.** No server, no database. JavaScript in the browser is fine,
@@ -116,6 +140,10 @@ yet.
   whole tree shrunk until the text is useless.
 - **Works on a phone.**
 - **Stable URLs.** A person keeps the same page address across rebuilds.
+- **Show the file as recorded.** kinsite never adds a relationship or fact the GEDCOM
+  doesn't state. When the file contradicts itself or is ambiguous, it shows what each
+  record says, labeled where GEDCOM provides labels, and the build log warns. Fixing
+  the data is the owner's call, not the generator's.
 
 ## Contributing
 

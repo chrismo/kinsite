@@ -67,7 +67,8 @@ test('birth and death keep DATE/PLAC; a burial place is not a death place', () =
 
 test('family links strip the @ delimiters', () => {
   const p = parseGedcom(GED).indi.get('I1')
-  assert.equal(p.famc, 'F2')
+  assert.equal(p.parentFams[0].fam, 'F2')
+  assert.equal(p.famc, null, 'F2 has no record, so it is not the main family')
   assert.deepEqual(p.fams, ['F1'])
   assert.deepEqual(parseGedcom(GED).fam.get('F1'), {
     id: 'F1', husb: 'I1', wife: 'I2', chil: ['I3'], marr: { date: '1915', plac: 'Marrowby' },
