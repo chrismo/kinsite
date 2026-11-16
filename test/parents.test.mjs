@@ -61,7 +61,7 @@ function site(ged, { anonymizeLiving = false, year } = {}) {
   return { indi, fam, kin, page: id => r.personPage(id).html }
 }
 const section = (html, h) => html.split(/<h2>|<footer>/).find(s => s.startsWith(h)) ?? ''
-const text = s => s.replace(/<[^>]+>/g, '').replace(/&middot;/g, '·').replace(/&uarr;/g, '↑').replace(/&amp;/g, '&')
+const text = s => s.replace(/<[^>]+>/g, '').replace(/&middot;/g, '·').replace(/&uarr;/g, '↑').replace(/&#x27;/g, "'").replace(/&amp;/g, '&')
 
 test('every FAMC is kept in file order with its PEDI, PHRASE and STAT; the first not DISPROVEN is the main family', () => {
   const { indi } = parseGedcom(withAda(`1 FAMC @F2@
@@ -155,9 +155,12 @@ test('with anonymizeLiving a Private person keeps only the main family, with no 
   assert.deepEqual(s.fam.get('F2').chil, ['I2'])
   assert.deepEqual(s.fam.get('F1').chil, ['I1'])
   for (const id of ['I1', 'I2', 'I3', 'I4', 'I5']) assert.doesNotMatch(s.page(id), /adopted|birth|Also listed|main parents/i)
+
+  const oneSided = site(withAda('').replace('2 DATE 1859', '2 DATE 1990'), { anonymizeLiving: true, year: 2026 })
+  for (const id of ['I1', 'I2', 'I3', 'I4', 'I5']) assert.doesNotMatch(oneSided.page(id), /record only|Also listed|main parents/i)
 })
 
-test('one-sided family links are warned about and left as recorded', () => {
+test('one-sided family links are warned about, and each is kept with the side that recorded it', () => {
   const ged = `0 @I1@ INDI
 1 FAMC @F1@
 1 FAMS @F2@
@@ -178,10 +181,10 @@ test('one-sided family links are warned about and left as recorded', () => {
     'F1 WIFE @I2@ has no matching FAMS in I2',
     'F1 CHIL @I2@ has no matching FAMC in I2',
   ])
-  assert.deepEqual(fam.get('F1').chil, ['I2'], 'no CHIL is added for a FAMC-only link')
-  assert.deepEqual(indi.get('I2').parentFams, [], 'no FAMC is added for a CHIL-only link')
-  assert.equal(indi.get('I2').famc, null)
-  assert.equal(indi.get('I1').famc, 'F1')
+  assert.deepEqual(fam.get('F1').chil, ['I2', 'I1'])
+  assert.deepEqual(indi.get('I1').parentFams, [{ fam: 'F1', pedi: '', phrase: '', stat: '', only: 'child' }])
+  assert.deepEqual(indi.get('I2').parentFams, [{ fam: 'F1', pedi: '', phrase: '', stat: '', only: 'family' }])
+  assert.equal(indi.get('I2').famc, 'F1')
   assert.deepEqual(parseGedcom(ADA).warnings, [])
 })
 
@@ -209,8 +212,33 @@ test('a FAMC pointing at a missing family is never the main family', () => {
   const s = site(ged)
   assert.equal(s.indi.get('I1').famc, 'F1')
   const parents = text(section(s.page('I1'), 'Parents'))
-  assert.match(parents, /^ParentsTobias Fenwick \(1825–\)Mara Quill \(1830–\)$/)
+  assert.match(parents, /^ParentsTobias Fenwick \(1825–\)Mara Quill \(1830–\)Also listed as a child of Silas Fenwick \(1795–\) and Hester Lowe \(1798–\) on the family record only$/)
   assert.match(text(s.page('I1')), /Ada Fenwick \(1859–\) ↑ Mara Quill/)
   assert.doesNotMatch(text(s.page('I2')), /main parents/)
   assert.ok(parseGedcom(ged).warnings.includes('I1 FAMC @F9@ has no matching CHIL in F9'))
+})
+
+const chart = html => html.match(/<svg[\s\S]*<\/svg>/)?.[0] ?? ''
+
+test('a child listed only on the family record is charted, and labeled on both pages', () => {
+  const s = site(withAda('1 FAMC @F2@\n'))
+  assert.equal(s.indi.get('I1').famc, 'F2', 'the child\'s own FAMC comes before a family-only link')
+  assert.match(text(section(s.page('I1'), 'Parents')),
+    /Also listed as a child of Tobias Fenwick \(1825–\) and Mara Quill \(1830–\) on the family record only$/)
+  assert.match(text(s.page('I2')), /Ada Fenwick \(1859–\) \(on the family record only; main parents: Silas Fenwick and Hester Lowe\)/)
+
+  const none = site(withAda(''))
+  assert.equal(none.indi.get('I1').famc, 'F1', 'with no FAMC, the first family listing the child')
+  assert.match(text(section(none.page('I1'), 'Parents')), /^Parentson the family record onlyTobias Fenwick/)
+  assert.match(text(none.page('I1')), /Ada Fenwick \(1859–\) ↑ Mara Quill/)
+  assert.match(chart(none.page('I3')), /Ada Fenwick/)
+  assert.match(text(none.page('I3')), /Ada Fenwick \(1859–\) \(on the family record only\)/)
+})
+
+test('a child listed only on their own record is charted, and labeled on the parents\' page', () => {
+  const s = site(ADA.replace('1 CHIL @I1@\n0 @F2@', '0 @F2@'))
+  assert.equal(s.indi.get('I1').famc, 'F1')
+  assert.match(text(section(s.page('I1'), 'Parents')), /^Parentson the child's record onlyTobias Fenwick/)
+  assert.match(text(s.page('I3')), /Ada Fenwick \(1859–\) \(on the child's record only\)/)
+  assert.match(chart(s.page('I3')), /Ada Fenwick/)
 })

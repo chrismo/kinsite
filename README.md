@@ -112,10 +112,12 @@ only in their main family, with no `PEDI` or `STAT`.
 
 The build warns about links recorded on one side only, such as a `FAMC` with no
 matching `CHIL`, a `CHIL` with no `FAMC`, or the same for `FAMS` and `HUSB`/`WIFE`:
-`warning: F2 CHIL @I7@ has no matching FAMC in I7`. kinsite doesn't fill in the
-missing side: each page shows what its own record says, so the child's Parents come
-from its `FAMC` and the parents' children come from the family's `CHIL`. Fix the file
-to make them agree.
+`warning: F2 CHIL @I7@ has no matching FAMC in I7`. A child link recorded on one side
+still shows on both, labeled with the side that recorded it ("on the family record only"
+or "on the child's record only"), so the child stays in the chart and the "Path to"
+line. A child's own `FAMC` comes before a link found only on a family's `CHIL` when
+choosing the main family. Add the missing line to the file to clear the label and the
+warning.
 
 ## Goals
 
