@@ -503,3 +503,27 @@ test('SINCE=old.ged kinsite config builds the preview', () => {
   assert.match(fs.readFileSync(path.join(p.dir, 'site', 'whats-new.html'), 'utf8'), /Not yet published.*Mara\..*Changed birth date from 1830 to 1831/)
   p.done()
 })
+
+test('with SINCE, a page changed or mentioned in the preview links to it; Private people never do', () => {
+  const p = project({ news: { 'adas.md': 'Sorted out @I1@.\n' } })
+  const v2 = edit(OLD, '2 DATE 1830', '2 DATE 1831')
+  p.stamp('2026-11-14T12:00', v2)
+  fs.copyFileSync(path.join(p.dir, 'tree.ged'), path.join(p.dir, 'old.ged'))
+  p.write('news/draft.md', 'Now on @I9@.\n')
+  p.write('tree.ged', edit(edit(edit(v2, '2 DATE 1825', '2 DATE 1824'), '2 DATE 1831', '2 DATE 1832'), '2 DATE 1990', '2 DATE 1991'))
+
+  const pending = '<a href="whats-new.html#pending">Changed since last deploy</a>'
+  const { page } = p.build({}, since(p))
+  assert.equal(updated(page('I2.html')), `<p class=updated>${pending}</p>`, 'a change in the preview')
+  assert.equal(updated(page('I9.html')), `<p class=updated>${pending}</p>`, 'a mention in a pending entry')
+  assert.equal(updated(page('I3.html')),
+    `<p class=updated><a href="whats-new.html#2026-11-14">Updated 14 Nov 2026</a> · ${pending}</p>`)
+  assert.equal(updated(page('I1.html')), note('2026-11-14', '14 Nov 2026'))
+  assert.equal(updated(page('I7.html')), `<p class=updated>${pending}</p>`)
+
+  assert.equal(updated(p.build().page('I2.html')), null, 'only with SINCE')
+  const pub = p.build({ anonymizeLiving: true }, since(p))
+  assert.equal(updated(pub.page('I7.html')), null)
+  assert.doesNotMatch(pub.page('I7.html'), /whats-new/)
+  p.done()
+})
