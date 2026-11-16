@@ -14,6 +14,7 @@ Needs Node 22 or later; no dependencies. Live demo: https://chrismo.github.io/ki
 node build.mjs sample/kinsite.config.json   # build the fictional sample tree into site/
 open site/index.html
 npm run dev                                  # preview the sample at http://localhost:4000 (PORT=... to change); rebuilds and reloads on edits
+node build.mjs diff sample/kinsite.config.json old.ged   # what changed on the site since old.ged (see "What changed")
 npm test
 ```
 
@@ -118,6 +119,48 @@ or "on the child's record only"), so the child stays in the chart and the "Path 
 line. A child's own `FAMC` comes before a link found only on a family's `CHIL` when
 choosing the main family. Add the missing line to the file to clear the label and the
 warning.
+
+## What changed
+
+Before deploying, `kinsite diff kinsite.config.json old.ged` compares an older GEDCOM
+with the config's current one and prints one sentence per change, grouped by person.
+It builds nothing and never touches git: getting `old.ged`, from a tag, a backup or
+anywhere else, is up to you.
+
+```
+Ada Fenwick (I1)
+  Changed birth date from 1859 to about 1858
+  Added: residence 1880, Marrowby
+  Now listed as a child of Tobias Fenwick and Mara Quill
+Removed: Jonas Pell (I9) and his marriage to Ada Fenwick
+```
+
+It reports what changed on the site, not in the GEDCOM: people and marriages added or
+removed, the name shown, events, notes, citations, photos and documents (by `FILE`),
+marriage date and place, and parent families with their `PEDI` and `STAT`. A child whose
+main parent family changes gets one "Now listed as a child of …" line. Tags the site
+doesn't show never appear, and neither do marriage notes and citations.
+
+GEDCOM facts have no IDs, so versions of one event on one person (and one `TYPE`, for
+`EVEN`) are matched like this: identical versions are unchanged; the rest are paired in
+file order when they share a date or a place, and read as changed; anything left over
+was added or removed. A fact whose date and place both changed reads as one removal and
+one addition. Notes are matched by text, and citations by source and page, so
+retitling a `SOUR` record changes nothing.
+
+The list follows the config's privacy settings, so the same two files can be checked
+against a research site and a public site. With `anonymizeLiving`, nothing is said
+about a Private person, including links to them, or about media of theirs or media
+shared with them; a removed person is named only if they would not be Private; and
+removals name only what kind of thing went ("Removed a burial record"), not what it
+said. With `notes` or `citations` off, there are no note or citation lines. Versions
+marked `RESN PRIVACY` or `CONFIDENTIAL` never appear, and all text is redacted as on
+the site.
+
+Most of this rests on xrefs staying the same, as stable URLs already do. If more than
+half of `old.ged`'s people are missing from the new file, the command stops with
+`error: xrefs look renumbered` rather than reporting the whole tree as removed and
+re-added.
 
 ## Goals
 

@@ -217,16 +217,16 @@ const EVIDENCE = `0 HEAD
 0 TRLR
 `
 
-const cite = (title, page = '', text = '', notes = []) => ({ title, page, text, notes })
+const cite = (sour, title, page = '', text = '', notes = []) => ({ sour, title, page, text, notes })
 
 test('event notes and citations stay with their event; the first of repeated events is the preferred one', () => {
   const p = parseGedcom(EVIDENCE).indi.get('I1')
   assert.deepEqual(p.events.slice(0, 2), [
     { tag: 'DEAT', val: '', date: '3 MAR 1901', plac: 'Fernhollow, Wexmoor',
       notes: ['The family Bible says March;\nthe stone may have been recut.'],
-      sources: [cite('Quill family Bible', 'p. 12\ntop margin', 'Abner Quill,\nd. 3rd March 1901', ['Ink faded.'])] },
+      sources: [cite('S1', 'Quill family Bible', 'p. 12\ntop margin', 'Abner Quill,\nd. 3rd March 1901', ['Ink faded.'])] },
     { tag: 'DEAT', val: '', date: '1902', plac: 'Fernhollow Churchyard, Wexmoor',
-      sources: [cite('Fernhollow churchyard\nsurvey', 'Plot 14')] },
+      sources: [cite('S2', 'Fernhollow churchyard\nsurvey', 'Plot 14')] },
   ])
   assert.equal(p.deat, p.events[0])
   assert.deepEqual(p.notes, ['Person note'])
@@ -263,18 +263,18 @@ test('birth and death summaries come from the first version with a year', () => 
 
 test('a NOTE that points to a shared note record is skipped, not shown as its pointer', () => {
   const p = parseGedcom(EVIDENCE).indi.get('I1')
-  assert.deepEqual(p.events[2], { tag: 'BURI', val: '', sources: [cite('Quill family Bible', '', 'Laid to rest\nbeside Briony')] })
+  assert.deepEqual(p.events[2], { tag: 'BURI', val: '', sources: [cite('S1', 'Quill family Bible', '', 'Laid to rest\nbeside Briony')] })
   assert.deepEqual(parseGedcom('0 @I1@ INDI\n1 NOTE @@N1@ is how a note starts with an at sign\n').indi.get('I1').notes,
     ['@N1@ is how a note starts with an at sign'])
 })
 
-test('citations on the person and on the shown name are person sources; dangling and void ones keep their page', () => {
+test('citations on the person and on the shown name are person sources, keeping the source xref; dangling and void ones keep their page', () => {
   assert.deepEqual(parseGedcom(EVIDENCE).indi.get('I1').sources, [
-    cite('Fernhollow churchyard\nsurvey', 'Baptism roll'),
-    cite(''),
-    cite('', 'Told by a cousin'),
-    cite(''),
-    cite('Told by Aunt Wenna\nat the fair'),
+    cite('S2', 'Fernhollow churchyard\nsurvey', 'Baptism roll'),
+    cite('S3', ''),
+    cite('VOID', '', 'Told by a cousin'),
+    cite('S9', ''),
+    cite('', 'Told by Aunt Wenna\nat the fair'),
   ])
   assert.deepEqual(parseGedcom(GED).indi.get('I1').sources, [])
 })
