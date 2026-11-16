@@ -14,6 +14,7 @@ Needs Node 22 or later; no dependencies. Live demo: https://chrismo.github.io/ki
 node build.mjs sample/kinsite.config.json   # build the fictional sample tree into site/
 open site/index.html
 npm run dev                                  # preview the sample at http://localhost:4000 (PORT=... to change); rebuilds and reloads on edits
+npm run dev -- my/kinsite.config.json        # the same for your own tree
 node build.mjs diff sample/kinsite.config.json old.ged   # what changed on the site since old.ged (see "What changed")
 node build.mjs news stamp kinsite.config.json old.ged    # record a deploy's changes for the What's new page (see "What's new")
 npm test
@@ -44,7 +45,8 @@ For your own tree, write a `kinsite.config.json` next to your GEDCOM:
 | `news`            | Directory of What's new entries and stamped changes (see "What's new")        | unset: no page         |
 
 Relative paths resolve against the config file's directory. `FOCUS=I3` or `OUT=dir` in
-the environment override the config for one run. The build log says what was
+the environment override the config for one run. `SINCE=old.ged` previews unpublished
+changes on the What's new page; it is never a config key (see "What's new"). The build log says what was
 published, e.g. `published   : citations shown, notes hidden, living anonymized`.
 
 ### A research site or a public site
@@ -212,6 +214,21 @@ later marked `RESN PRIVACY` or `CONFIDENTIAL`, drops out of past deploys on the 
 rebuild, and a deploy left with nothing to show is left off. Entries not yet stamped
 aren't shown. The build log says, for example,
 `news        : 4 deploys, 2 entries not yet stamped`.
+
+**Previewing the next deploy.** To read the next entry as it will appear, build with
+`SINCE` set to the GEDCOM that's live now:
+
+```sh
+SINCE=old.ged node build.mjs kinsite.config.json
+SINCE=old.ged npm run dev -- kinsite.config.json   # rebuilds as the GEDCOM and the entries change
+```
+
+`whats-new.html` then starts with a "Not yet published" section: every entry not yet
+stamped, followed by a fresh "What changed" diff between `old.ged` and the config's
+GEDCOM, under the same privacy settings as the rest of the page. The build log says
+`news        : previewing changes since old.ged`. `SINCE` is only ever an environment
+variable, never a config key, so a deploy can't publish the preview by accident; and
+with the recipe below (stamp, then build) nothing is pending at deploy anyway.
 
 **A deploy recipe.** kinsite never touches git; this is one way to run it:
 

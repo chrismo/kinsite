@@ -5,6 +5,7 @@
 //   node build.mjs path/to/kinsite.config.json
 //   FOCUS=I3 node build.mjs kinsite.config.json   # re-center on another person
 //   OUT=/tmp/site node build.mjs kinsite.config.json
+//   SINCE=old.ged node build.mjs kinsite.config.json   # preview unstamped news on What's new
 //   node build.mjs diff kinsite.config.json old.ged   # what changed on the site since old.ged
 //   node build.mjs news stamp kinsite.config.json old.ged   # record this deploy's changes for What's new
 import { loadConfig } from './lib/config.mjs'
@@ -26,7 +27,7 @@ if (!file || (cmd !== 'build' && !old)) {
 try {
   if (cmd === 'diff') console.log(changeReport(loadConfig(file), old))
   else if (cmd === 'stamp') stampNews(loadConfig(file), old)
-  else buildSite(loadConfig(file, { focus: process.env.FOCUS, out: process.env.OUT }))
+  else buildSite(loadConfig(file, { focus: process.env.FOCUS, out: process.env.OUT }), { since: process.env.SINCE })
 } catch (e) {
   console.error(`error: ${e.message}`)
   process.exit(1)

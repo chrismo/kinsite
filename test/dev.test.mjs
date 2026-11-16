@@ -4,6 +4,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import http from 'node:http'
+import { spawn } from 'node:child_process'
 import { createServer, RELOAD_SCRIPT } from '../scripts/serve.mjs'
 
 let root, server, state
@@ -73,4 +74,37 @@ test('/__version reports the build version', async () => {
   assert.equal((await get('/__version')).body, '1')
   state.version = 2
   assert.equal((await get('/__version')).body, '2')
+})
+
+test('npm run dev takes a config, passes SINCE through, and rebuilds the preview as entries change', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kinsite-dev-since-'))
+  const ada = date => `0 @I1@ INDI\n1 NAME Ada /Fenwick/\n1 BIRT\n2 DATE ${date}\n2 PLAC Marrowby\n1 DEAT\n2 DATE 1920\n0 TRLR\n`
+  fs.writeFileSync(path.join(dir, 'old.ged'), ada('1859'))
+  fs.writeFileSync(path.join(dir, 'tree.ged'), ada('1858'))
+  fs.mkdirSync(path.join(dir, 'news'))
+  fs.writeFileSync(path.join(dir, 'news', 'first.md'), 'First entry.\n')
+  fs.writeFileSync(path.join(dir, 'kinsite.config.json'), JSON.stringify({ gedcom: 'tree.ged', news: 'news' }))
+  const dev = spawn(process.execPath, [path.join(import.meta.dirname, '../scripts/dev.mjs'), 'kinsite.config.json'], {
+    cwd: dir, env: { ...process.env, INIT_CWD: dir, PORT: '0', SINCE: 'old.ged' }, stdio: ['ignore', 'pipe', 'inherit'],
+  })
+  try {
+    const port = await new Promise((resolve, reject) => {
+      let out = ''
+      dev.stdout.on('data', d => {
+        out += d
+        const m = out.match(/http:\/\/localhost:(\d+)/)
+        if (m) resolve(m[1])
+      })
+      dev.on('exit', code => reject(new Error(`dev exited ${code}`)))
+    })
+    const page = () => fetch(`http://localhost:${port}/whats-new.html`).then(r => r.text())
+    const html = await page()
+    assert.match(html, /Not yet published.*First entry\..*Changed birth date from 1859 to 1858/)
+    fs.writeFileSync(path.join(dir, 'news', 'second.md'), 'Second entry.\n')
+    for (let i = 0; i < 50 && !(await page()).includes('Second entry.'); i++) await new Promise(r => setTimeout(r, 100))
+    assert.match(await page(), /Second entry\./)
+  } finally {
+    dev.kill()
+    fs.rmSync(dir, { recursive: true })
+  }
 })
