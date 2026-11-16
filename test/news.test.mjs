@@ -357,7 +357,7 @@ test('with news unset, there is no page, no link and no log line', () => {
   const lines = []
   buildSite(loadConfig(path.join(p.dir, 'bare.json')), { log: s => lines.push(s) })
   assert.ok(!fs.existsSync(path.join(p.dir, 'site', 'whats-new.html')))
-  assert.doesNotMatch(fs.readFileSync(path.join(p.dir, 'site', 'index.html'), 'utf8'), /whats-new/)
+  for (const f of ['index.html', 'I1.html']) assert.doesNotMatch(fs.readFileSync(path.join(p.dir, 'site', f), 'utf8'), /whats-new/)
   assert.ok(!lines.some(l => /^\s+news\s+:/.test(l)))
   p.done()
 })
@@ -370,6 +370,56 @@ test('a news directory that does not exist yet builds an empty page and is made 
   assert.match(page('whats-new.html'), /Nothing yet/)
   p.stamp('2026-11-14T12:00', edit(OLD, '2 DATE 1830', '2 DATE 1831'))
   assert.deepEqual(p.ls(), ['2026-11-14.changes.json'])
+  p.done()
+})
+
+const updated = html => html.match(/<p class=updated>.*?<\/p>/)?.[0] ?? null
+const note = (anchor, date) => `<p class=updated><a href="whats-new.html#${anchor}">Updated ${date}</a></p>`
+
+test('a person page notes the latest deploy that changed or mentioned the person, under the name', () => {
+  const p = project({ news: { 'adas.md': 'Sorted out @I1@.\n' } })
+  const v2 = edit(edit(OLD, '2 DATE 1830', '2 DATE 1831'), '2 DATE 1825', '2 DATE 1824')
+  p.stamp('2026-11-14T12:00', v2)
+  fs.copyFileSync(path.join(p.dir, 'tree.ged'), path.join(p.dir, 'old.ged'))
+  p.write('news/mara.md', 'More on @I3@.\n')
+  p.stamp('2026-11-20T12:00', edit(v2, '2 DATE 1831', '2 DATE 1832'))
+  fs.copyFileSync(path.join(p.dir, 'tree.ged'), path.join(p.dir, 'old.ged'))
+  p.write('news/kit.md', 'And @I9@.\n')
+  p.stamp('2026-11-20T18:00')
+  p.write('news/draft.md', 'Not yet stamped: @I2@ and @I1@.\n')
+
+  const { page } = p.build()
+  assert.ok(page('I2.html').includes(`<h1>Tobias Fenwick</h1>${note('2026-11-14', '14 Nov 2026')}`))
+  assert.equal(updated(page('I3.html')), note('2026-11-20', '20 Nov 2026'))
+  assert.equal(updated(page('I1.html')), note('2026-11-14', '14 Nov 2026'), 'a mention counts; pending entries do not')
+  assert.equal(updated(page('I9.html')), note('2026-11-20-2', '20 Nov 2026'))
+  assert.equal(updated(page('I7.html')), null)
+  const html = page('whats-new.html')
+  for (const id of ['2026-11-20-2', '2026-11-20', '2026-11-14']) assert.match(html, new RegExp(`<h2 id=${id}>`))
+  p.done()
+})
+
+test('only changes shown under this build\'s rules date-stamp a page; Private people never get the note', () => {
+  const p = project({ news: { 'wren.md': 'Found @I7@.\n' } })
+  const v2 = edit(edit(OLD, '2 DATE 1990', '2 DATE 1991'),
+    '1 NAME Tobias /Fenwick/\n', '1 NAME Tobias /Fenwick/\n1 NOTE Kept the mill.\n')
+  p.stamp('2026-11-14T12:00', v2)
+  assert.equal(updated(p.build().page('I7.html')), note('2026-11-14', '14 Nov 2026'))
+  assert.equal(updated(p.build().page('I2.html')), note('2026-11-14', '14 Nov 2026'))
+  assert.equal(updated(p.build({ notes: false }).page('I2.html')), null)
+  const pub = p.build({ anonymizeLiving: true })
+  assert.equal(updated(pub.page('I7.html')), null)
+  assert.doesNotMatch(pub.page('I7.html'), /whats-new/)
+  p.done()
+})
+
+test('a fact later marked RESN no longer date-stamps the page', () => {
+  const p = project()
+  const v2 = edit(OLD, '1 DEAT\n2 DATE 1890\n', '1 DEAT\n2 DATE 1890\n1 BURI\n2 DATE 1890\n2 PLAC Oak Hill\n')
+  p.stamp('2026-11-14T12:00', v2)
+  assert.equal(updated(p.build().page('I2.html')), note('2026-11-14', '14 Nov 2026'))
+  p.write('tree.ged', edit(v2, '2 PLAC Oak Hill\n', '2 PLAC Oak Hill\n2 RESN PRIVACY\n'))
+  assert.equal(updated(p.build().page('I2.html')), null)
   p.done()
 })
 
@@ -451,5 +501,29 @@ test('SINCE=old.ged kinsite config builds the preview', () => {
   const out = execFileSync('node', [BIN, 'kinsite.config.json'], { cwd: p.dir, encoding: 'utf8', env: { ...process.env, SINCE: 'old.ged' } })
   assert.match(out, /^ {2}news {8}: previewing changes since old\.ged$/m)
   assert.match(fs.readFileSync(path.join(p.dir, 'site', 'whats-new.html'), 'utf8'), /Not yet published.*Mara\..*Changed birth date from 1830 to 1831/)
+  p.done()
+})
+
+test('with SINCE, a page changed or mentioned in the preview links to it; Private people never do', () => {
+  const p = project({ news: { 'adas.md': 'Sorted out @I1@.\n' } })
+  const v2 = edit(OLD, '2 DATE 1830', '2 DATE 1831')
+  p.stamp('2026-11-14T12:00', v2)
+  fs.copyFileSync(path.join(p.dir, 'tree.ged'), path.join(p.dir, 'old.ged'))
+  p.write('news/draft.md', 'Now on @I9@.\n')
+  p.write('tree.ged', edit(edit(edit(v2, '2 DATE 1825', '2 DATE 1824'), '2 DATE 1831', '2 DATE 1832'), '2 DATE 1990', '2 DATE 1991'))
+
+  const pending = '<a href="whats-new.html#pending">Changed since last deploy</a>'
+  const { page } = p.build({}, since(p))
+  assert.equal(updated(page('I2.html')), `<p class=updated>${pending}</p>`, 'a change in the preview')
+  assert.equal(updated(page('I9.html')), `<p class=updated>${pending}</p>`, 'a mention in a pending entry')
+  assert.equal(updated(page('I3.html')),
+    `<p class=updated><a href="whats-new.html#2026-11-14">Updated 14 Nov 2026</a> · ${pending}</p>`)
+  assert.equal(updated(page('I1.html')), note('2026-11-14', '14 Nov 2026'))
+  assert.equal(updated(page('I7.html')), `<p class=updated>${pending}</p>`)
+
+  assert.equal(updated(p.build().page('I2.html')), null, 'only with SINCE')
+  const pub = p.build({ anonymizeLiving: true }, since(p))
+  assert.equal(updated(pub.page('I7.html')), null)
+  assert.doesNotMatch(pub.page('I7.html'), /whats-new/)
   p.done()
 })
