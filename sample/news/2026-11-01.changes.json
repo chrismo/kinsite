@@ -1,0 +1,36 @@
+{
+  "date": "2026-11-01",
+  "entries": [
+    "rook-letters"
+  ],
+  "changes": [
+    {
+      "kind": "event",
+      "op": "added",
+      "id": "I6",
+      "to": {
+        "tag": "DEAT",
+        "type": "",
+        "val": "",
+        "date": "1958",
+        "phrase": "",
+        "plac": "",
+        "resn": ""
+      }
+    },
+    {
+      "kind": "event",
+      "op": "added",
+      "id": "I8",
+      "to": {
+        "tag": "OCCU",
+        "type": "",
+        "val": "Lamplighter",
+        "date": "",
+        "phrase": "",
+        "plac": "",
+        "resn": ""
+      }
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "date": "2026-11-14",
+  "entries": [
+    "gideon-birth"
+  ],
+  "changes": [
+    {
+      "kind": "event",
+      "op": "added",
+      "id": "I1",
+      "to": {
+        "tag": "OCCU",
+        "type": "",
+        "val": "Wheelwright",
+        "date": "",
+        "phrase": "",
+        "plac": "",
+        "resn": ""
+      }
+    },
+    {
+      "kind": "event",
+      "op": "changed",
+      "id": "I10",
+      "from": {
+        "tag": "BIRT",
+        "type": "",
+        "val": "",
+        "date": "1906",
+        "phrase": "",
+        "plac": "Fenwick Hollow, Tansy Shire, Westmarch",
+        "resn": ""
+      },
+      "to": {
+        "tag": "BIRT",
+        "type": "",
+        "val": "",
+        "date": "8 NOV 1906",
+        "phrase": "day smudged in the register",
+        "plac": "Fenwick Hollow, Tansy Shire, Westmarch",
+        "resn": ""
+      }
+    }
+  ]
+}
