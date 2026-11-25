@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- **Link to one deploy.** Each dated heading on What's new has a faint `#` link
+  to itself, to copy and share. (#28)
+
 ## 0.4.0
 
 - **What's new page.** Set `"news": "news"` in the config and write short

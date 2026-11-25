@@ -3,5 +3,6 @@
   "title": "The Quill & Rook Families",
   "focus": "I10",
   "out": "../site",
-  "mediaRoot": "."
+  "mediaRoot": ".",
+  "news": "news"
 }
