@@ -227,6 +227,15 @@ Wren Fenwick (I7)
     'Ada Fenwick (I1)\n  Retitled a photo from Ada at the mill to Ada and the loom')
 })
 
+test('a photo\'s CROP and link TITL are not changes, and records keep only the shared OBJE fields', () => {
+  const media = '0 @O3@ OBJE\n1 FILE picnic.jpg\n2 TITL The picnic\n0 TRLR\n'
+  const old = edit(OLD, '0 TRLR\n', media, '1 FAMC @F1@\n1 FAMS @F3@\n', '1 FAMC @F1@\n1 FAMS @F3@\n1 OBJE @O3@\n')
+  const cropped = edit(old, '1 OBJE @O3@\n', '1 OBJE @O3@\n2 CROP\n3 LEFT 40\n2 TITL On the left\n')
+  assert.equal(changes(old, cropped), 'No changes.')
+  const added = diffTrees(parseGedcom(OLD), parseGedcom(cropped)).filter(r => r.kind === 'media')
+  assert.deepEqual(added.map(r => r.to), [{ file: 'picnic.jpg', title: 'The picnic', form: '' }])
+})
+
 test('parent links: a new main family is one line; other links say also, or no longer, with their labels', () => {
   const both = edit(OLD, '1 CHIL @I2@\n', '1 CHIL @I2@\n1 CHIL @I1@\n', '1 FAMC @F1@\n1 FAMS', '1 FAMC @F1@\n1 FAMC @F2@\n1 FAMS')
   assert.equal(changes(OLD, both), 'Ada Fenwick (I1)\n  Now also listed as a child of Silas Fenwick and Hester Lowe')

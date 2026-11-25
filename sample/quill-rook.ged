@@ -58,6 +58,13 @@
 1 DEAT
 2 DATE 1 MAR 1944
 2 PLAC Fenwick Hollow, Tansy Shire, Westmarch
+1 OBJE @O2@
+2 CROP
+3 TOP 100
+3 LEFT 100
+3 HEIGHT 180
+3 WIDTH 140
+2 TITL Corwin, far left
 1 FAMC @F1@
 1 FAMS @F3@
 0 @I4@ INDI
@@ -88,6 +95,12 @@
 2 PLAC Upper Fennel, Brindle Shire, Westmarch
 1 DEAT
 2 DATE 1958
+1 OBJE @O2@
+2 CROP
+3 TOP 125
+3 LEFT 310
+3 HEIGHT 180
+3 WIDTH 140
 1 FAMC @F2@
 1 FAMS @F3@
 0 @I8@ INDI
@@ -113,6 +126,7 @@
 2 PLAC Fenwick Hollow, Tansy Shire, Westmarch
 1 DEAT
 2 DATE 1987
+1 OBJE @O2@
 1 FAMC @F3@
 0 @I10@ INDI
 1 NAME Gideon Osric /Quill/
@@ -127,6 +141,13 @@
 2 DATE 14 AUG 1979
 2 PLAC Marrowby, Tansy Shire, Westmarch
 1 OBJE @O1@
+1 OBJE @O2@
+2 CROP
+3 TOP 245
+3 LEFT 500
+3 HEIGHT 155
+3 WIDTH 120
+2 TITL Gideon, front, in the blue coat
 1 FAMC @F3@
 1 FAMS @F4@
 1 NOTE Kept the family ledger. The ledger lists the shop telephone as
@@ -202,6 +223,10 @@
 1 FILE media/gideon.png
 2 FORM image/png
 2 TITL Gideon at the workbench (placeholder image)
+0 @O2@ OBJE
+1 FILE media/harvest-show.png
+2 FORM image/png
+2 TITL The Quills at the harvest show, about 1912 (placeholder image)
 0 @S1@ SOUR
 1 TITL Quill family Bible
 0 @S2@ SOUR
