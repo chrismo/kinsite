@@ -399,6 +399,22 @@ test('a person page notes the latest deploy that changed or mentioned the person
   p.done()
 })
 
+test('each dated What\'s new heading links to itself, labeled with its date', () => {
+  const p = project({ news: { 'adas.md': 'Sorted out @I1@.\n' } })
+  p.stamp('2026-11-14T12:00', edit(OLD, '2 DATE 1830', '2 DATE 1831'))
+  p.write('news/kit.md', 'And @I9@.\n')
+  p.stamp('2026-11-14T18:00')
+  fs.copyFileSync(path.join(p.dir, 'tree.ged'), path.join(p.dir, 'old.ged'))
+  const html = p.build({}, since(p)).page('whats-new.html')
+  const heads = [...html.matchAll(/<h2 id=([\w-]+)>(.*?)<\/h2>/g)].map(([, id, inner]) => [id, inner])
+  assert.deepEqual(heads.map(([id]) => id), ['pending', '2026-11-14-2', '2026-11-14'])
+  for (const [id, inner] of heads.slice(1)) {
+    assert.equal(inner, `14 November 2026<a class=self href="#${id}" aria-label="Link to 14 November 2026">#</a>`)
+  }
+  assert.equal(heads[0][1], 'Not yet published', 'the preview heading is not a stable place to link')
+  p.done()
+})
+
 test('only changes shown under this build\'s rules date-stamp a page; Private people never get the note', () => {
   const p = project({ news: { 'wren.md': 'Found @I7@.\n' } })
   const v2 = edit(edit(OLD, '2 DATE 1990', '2 DATE 1991'),

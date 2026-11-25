@@ -238,6 +238,10 @@ note, entries not yet stamped don't count, and the note doesn't age out. When bu
 with `SINCE`, a person changed or mentioned in the preview also gets a "Changed since
 last deploy" link to the "Not yet published" section.
 
+**Sharing one deploy.** Each dated heading on What's new has a faint `#` link to
+itself, in the left margin (beside the date on a phone), so a reader can copy the link
+to one deploy's news and send it to a relative. "Not yet published" has none.
+
 **A deploy recipe.** kinsite never touches git; this is one way to run it:
 
 1. Get the GEDCOM that's live now, as `old.ged`.
