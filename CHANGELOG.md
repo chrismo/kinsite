@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Long URLs wrap on phones.** A long web address in a note or citation used to
+  widen the page, so it scrolled sideways on a phone. Now it breaks onto the next
+  line. (#40)
 - **Link to one deploy.** Each dated heading on What's new has a faint `#` link
   to itself, to copy and share. (#28)
 - **Group photos show each person's part.** A `CROP` under a person's `OBJE`
