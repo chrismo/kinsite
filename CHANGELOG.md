@@ -1,37 +1,32 @@
 # Changelog
 
-## Unreleased
+## 0.5.0
 
-- **A photo keeps its title.** A person's own `TITL` on an `OBJE` link used to
-  replace the photo's title, so a crop was captioned only "Second from left". Now
-  the caption gives the photo's title with the link's `TITL` under it. The alt text
-  describes the image: "<name> in <photo title>" for a crop, and the photo's title
-  for a whole image. (#36)
+- **Identify who's in a photo** with `kinsite dev path/to/kinsite.config.json`, at
+  `/who`. Draw a box on each person, see it close up, and search the tree for who
+  it is. The search lists the people linked to the photo, then the people alive
+  when it was taken. The page gives `OBJE`/`CROP`/`TITL` lines to paste for each
+  placed person. Boxes, guesses, unknowns and notes save to `<OBJE id>.json` in a
+  `who` folder beside the config, or wherever the new `who` config key says. A crop
+  changed in the GEDCOM later updates its box. A session whose photo now has a
+  different file is flagged, and isn't saved over until you say its boxes are for
+  this photo. The GEDCOM is never written. (#30)
+- **`kinsite dev`** runs the dev preview and identify mode from the npm package,
+  which now includes the dev server. Before, they were only in a clone of kinsite.
+- **Group photos show each person's part.** A `CROP` under a person's `OBJE`
+  link shows just that region of a shared photo on their page. The caption gives
+  the photo's title with the link's own `TITL` under it, and the alt text reads
+  "<name> in <photo title>". No image library and no copies: the size comes from
+  the JPEG, PNG, GIF or WebP header (upright, for a JPEG a phone saved sideways)
+  and the crop is done in CSS. (#26, #36)
+- **A page for each shared photo.** The whole image, with a numbered outline on
+  each placed person that shows their name on hover, a list of who's in it, and
+  the people linked but not yet placed. Each person's thumbnail links there. (#30)
 - **Long URLs wrap on phones.** A long web address in a note or citation used to
   widen the page, so it scrolled sideways on a phone. Now it breaks onto the next
   line. (#40)
 - **Link to one deploy.** Each dated heading on What's new has a faint `#` link
   to itself, to copy and share. (#28)
-- **Group photos show each person's part.** A `CROP` under a person's `OBJE`
-  link shows just that region of a shared photo on their page, with the link's own
-  `TITL` as the caption. No image library and no copies:
-  the size comes from the JPEG, PNG, GIF or WebP header (upright, for a JPEG a
-  phone saved sideways) and the crop is done in CSS. (#26)
-- **A page for each shared photo.** The whole image, with a numbered outline on
-  each placed person that shows their name on hover, a list of who's in it, and
-  the people linked but not yet placed. Each person's thumbnail links there. (#30)
-- **Identify who's in a photo** with `npm run dev`, at `/who`. Draw a box on each
-  person, see it close up, and search the tree for who it is. The search lists the
-  people linked to the photo, then the people alive when it was taken. The page gives
-  `OBJE`/`CROP`/`TITL` lines to paste for each placed person. Boxes, guesses,
-  unknowns and notes save to `<OBJE id>.json` in a `who` folder beside the config,
-  or wherever the new `who` config key says. A crop changed in the GEDCOM later
-  updates its box. A session whose photo now has a different file is flagged, and
-  isn't saved over until you say its boxes are for this photo. The GEDCOM is never
-  written. (#30)
-- **`kinsite dev path/to/kinsite.config.json`** runs the dev preview and identify
-  mode from the npm package, which now includes the dev server. Before, they were
-  only in a clone of kinsite.
 
 ## 0.4.0
 
