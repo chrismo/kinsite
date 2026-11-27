@@ -62,10 +62,14 @@ test('focus override re-centers the site', () => {
   assert.match(index, /<h2>Family of Abner Quill<\/h2>/)
 })
 
-test('refuses an output directory that holds the GEDCOM or the media, since it is deleted first', () => {
+test('refuses an output directory that holds the GEDCOM, the media or the identify-mode sessions, since it is deleted first', () => {
   const config = loadConfig(CONFIG)
   for (const out of [path.dirname(config.gedcom), path.dirname(path.dirname(config.gedcom)), config.mediaRoot]) {
     assert.throws(() => buildSite({ ...config, out }, { log: () => {} }), /refusing to delete/)
   }
   assert.ok(fs.existsSync(config.gedcom))
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'kinsite-golden-'))
+  assert.throws(() => buildSite({ ...config, out, who: path.join(out, 'who') }, { log: () => {} }), /refusing to delete .*: it contains .*\/who$/)
+  assert.ok(fs.existsSync(out))
+  fs.rmSync(out, { recursive: true })
 })

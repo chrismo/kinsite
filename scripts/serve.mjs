@@ -4,7 +4,7 @@ import http from 'node:http'
 
 export const RELOAD_SCRIPT = `<script>(()=>{const v=()=>fetch('/__version').then(r=>r.text()).catch(()=>null);let c;v().then(x=>{c=x;setInterval(async()=>{const n=await v();if(n&&c&&n!==c)location.reload();c=n||c},700)})})()</script>`
 
-const TYPES = {
+export const TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -29,8 +29,9 @@ export function resolvePath(root, urlPath) {
   return file
 }
 
-export function createServer(getRoot, state) {
+export function createServer(getRoot, state, handle = () => false) {
   return http.createServer((req, res) => {
+    if (handle(req, res)) return
     const send = (status, body, type = 'text/plain; charset=utf-8') => {
       res.writeHead(status, { 'content-type': type, 'cache-control': 'no-store' })
       res.end(body)
