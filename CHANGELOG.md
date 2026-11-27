@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **A photo keeps its title.** A person's own `TITL` on an `OBJE` link used to
+  replace the photo's title, so a crop was captioned only "Second from left". Now
+  the caption gives the photo's title with the link's `TITL` under it. The alt text
+  describes the image: "<name> in <photo title>" for a crop, and the photo's title
+  for a whole image. (#36)
 - **Link to one deploy.** Each dated heading on What's new has a faint `#` link
   to itself, to copy and share. (#28)
 - **Group photos show each person's part.** A `CROP` under a person's `OBJE`
