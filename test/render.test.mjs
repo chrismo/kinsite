@@ -1,6 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { esc, yr, life, when, Renderer } from '../lib/render.mjs'
+import { CSS } from '../lib/css.mjs'
 import { Kin } from '../lib/kin.mjs'
 import { anonymize } from '../lib/living.mjs'
 import { CONTACT } from '../lib/redact.mjs'
@@ -456,4 +457,8 @@ test('with notes off, a version that has only a note is not shown as an alternat
   const r = new Renderer({ notes: false })
   assert.deepEqual(evidence(r.eventsHtml({ events: [{ tag: 'DEAT', val: '', date: '1911' },
     { tag: 'DEAT', val: '', notes: ['Said to be 1912'] }, { tag: 'OCCU', val: '', notes: ['Miller'] }] })), ['Died 1911'])
+})
+
+test('long words such as URLs wrap instead of widening the page on a phone', () => {
+  assert.match(CSS, /\bbody\{[^}]*overflow-wrap:break-word/)
 })
