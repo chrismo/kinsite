@@ -145,7 +145,9 @@ part of a shared image, and a `TITL` there captions it for that person:
 ```
 
 The page shows just that region, at most 260px tall, linked to the whole image. Values
-are pixels of the file (PNG or JPEG). A missing `LEFT` or `TOP` is 0, and a missing `WIDTH`
+are pixels of the photo as it's shown, upright: for a JPEG that a phone saved sideways
+with an Exif orientation, measure the turned picture, the way browsers and photo apps
+display it. Sizes are read from JPEG, PNG, GIF and WebP files. A missing `LEFT` or `TOP` is 0, and a missing `WIDTH`
 or `HEIGHT` runs to the edge. A crop that runs past the edge is cut off there. If the
 size can't be read from the file, or no part of the crop is inside it, the page shows the
 whole image. Placing or moving a crop isn't listed on What's new.
