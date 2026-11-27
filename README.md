@@ -144,13 +144,23 @@ part of a shared image, and a `TITL` there captions it for that person:
 2 TITL Corwin, far left
 ```
 
-The page shows just that region, at most 260px tall, linked to the whole image. Values
+The page shows just that region, at most 260px tall. Values
 are pixels of the photo as it's shown, upright: for a JPEG that a phone saved sideways
 with an Exif orientation, measure the turned picture, the way browsers and photo apps
 display it. Sizes are read from JPEG, PNG, GIF and WebP files. A missing `LEFT` or `TOP` is 0, and a missing `WIDTH`
 or `HEIGHT` runs to the edge. A crop that runs past the edge is cut off there. If the
 size can't be read from the file, or no part of the crop is inside it, the page shows the
 whole image. Placing or moving a crop isn't listed on What's new.
+
+**A page for each shared photo.** An image that two or more people link to, or that
+anyone has a `CROP` of, gets a page of its own, and each of those people's thumbnails
+links to it. The page shows the whole image with a faint numbered outline on each
+cropped person; hovering or focusing an outline shows their name and the link's `TITL`,
+so a caption like "(unconfirmed)" says how sure the placement is. Below it, "In this
+photo" lists the outlined people by number, left to right, and "Also in this photo (not
+yet placed)" lists the people linked without a crop, so readers can see who still needs
+a place. With `anonymizeLiving`, a photo shared with a living person is withheld from
+everyone, so it has no page.
 
 ## What changed
 

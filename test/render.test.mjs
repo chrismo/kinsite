@@ -169,6 +169,69 @@ test('a cropped photo shows just its region, linked to the whole image and capti
   assert.match(figures[2], /^<figure><a href="media\/odd.png"><img src="media\/odd.png" alt="Unknown size"><\/a>/)
 })
 
+const picnic = (crop, caption) => ({ obje: 'O7', file: 'picnic.png', title: 'The picnic', ...(caption && { caption }), ...(crop && { crop }) })
+function picnicSite() {
+  const indi = new Map([
+    person('I1', 'Ash', '1950'), person('I2', 'Bay', '1955'), person('I3', 'Cal', '1960'), person('I4', 'Dee', '1965'),
+    person('I5', 'Eli', '1970'), person('I6', 'Fay', '1975'),
+  ])
+  indi.get('I1').media = [picnic({ left: 600, top: 100, width: 200, height: 300 }, 'Right, in the hat (unconfirmed)')]
+  indi.get('I2').media = [picnic({ left: 100, top: 150, width: 150, height: 300 })]
+  indi.get('I3').media = [picnic()]
+  indi.get('I4').media = [picnic({ left: 5000 })]
+  indi.get('I5').media = [{ obje: 'O8', file: 'eli.png', title: 'Eli alone' }]
+  indi.get('I6').media = [{ obje: 'O9', file: 'fay.png', title: 'Fay, cropped', crop: { left: 10, top: 10, width: 50, height: 50 } }]
+  const copied = new Map([['picnic.png', 'media/picnic.png'], ['eli.png', 'media/eli.png'], ['fay.png', 'media/fay.png']])
+  const sizes = new Map([['picnic.png', { width: 1000, height: 600 }], ['fay.png', { width: 100, height: 100 }]])
+  return new Renderer({ indi, fam: new Map(), kin: new Kin(indi, new Map(), 'I1'), copied, sizes })
+}
+
+test('a photo gets its own page when two or more people share it, or anyone has a crop of it', () => {
+  assert.deepEqual([...picnicSite().photos.keys()], ['O7', 'O9'])
+})
+
+test("a shared photo's thumbnail links to its photo page; a photo of one person still links to the file", () => {
+  const r = picnicSite()
+  assert.match(r.personPage('I1').html, /<figure><a class=crop href="O7.html" /)
+  assert.match(r.personPage('I3').html, /<figure><a href="O7.html"><img src="media\/picnic.png"/)
+  assert.match(r.personPage('I5').html, /<figure><a href="media\/eli.png">/)
+})
+
+test('a photo page outlines each placed person, numbered left to right, and lists who is not yet placed', () => {
+  const html = picnicSite().photoPage('O7')
+  assert.match(html, /<title>The picnic<\/title>/)
+  assert.match(html, /<h1>The picnic<\/h1>/)
+  assert.match(html, /<div class=stage><a href="media\/picnic.png"><img src="media\/picnic.png" alt="The picnic"><\/a>/)
+  const boxes = html.match(/<a class="who[^"]*" href="I\d.html"[^>]*>.*?<\/a>/g)
+  assert.deepEqual(boxes, [
+    '<a class="who" href="I2.html" style="left:10%;top:25%;width:15%;height:50%"><b>1</b><span>Bay Zed</span></a>',
+    '<a class="who r" href="I1.html" style="left:60%;top:16.667%;width:20%;height:50%"><b>2</b><span>Ash Zed · Right, in the hat (unconfirmed)</span></a>',
+  ])
+  const placed = html.match(/<ol class=placed>(.*?)<\/ol>/)[1]
+  assert.equal(placed, '<li><a href="I2.html">Bay Zed</a> <span class=yr>(1955–)</span></li>' +
+    '<li><a href="I1.html">Ash Zed</a> <span class=yr>(1950–)</span> <span class=cn>Right, in the hat (unconfirmed)</span></li>')
+  const unplaced = html.match(/<h2>Also in this photo \(not yet placed\)<\/h2><ul class=rel>(.*?)<\/ul>/)[1]
+  assert.equal(unplaced, '<li><a href="I3.html">Cal Zed</a> <span class=yr>(1960–)</span></li>' +
+    '<li><a href="I4.html">Dee Zed</a> <span class=yr>(1965–)</span></li>')
+})
+
+test('a photo page without a readable size lists everyone as not yet placed', () => {
+  const r = picnicSite()
+  r.sizes.delete('picnic.png')
+  const html = r.photoPage('O7')
+  assert.doesNotMatch(html, /class="who|<ol class=placed>/)
+  assert.equal(html.match(/<h2>Also in this photo \(not yet placed\)<\/h2><ul class=rel>(.*?)<\/ul>/)[1].match(/<li>/g).length, 4)
+})
+
+test('a photo shared with a living person gets no page under anonymizeLiving', () => {
+  const r = picnicSite()
+  const indi = new Map(r.indi)
+  indi.set('I7', { ...person('I7', 'Gus', '2010')[1], media: [picnic({ left: 0, width: 10, height: 10 })] })
+  const a = anonymize(indi, new Map(), 2090)
+  const { photos } = new Renderer({ ...r, indi: a.indi, kin: new Kin(a.indi, new Map(), 'I1') })
+  assert.deepEqual([...photos.keys()], ['O9'])
+})
+
 test('indexPage marks people with photos and offers a photos-only filter', () => {
   const p = (id, giv, media = []) => ({ id, giv, surn: 'Thistle', name: `${giv} Thistle`, media, birt: {}, deat: {} })
   const indi = new Map([

@@ -136,13 +136,13 @@ const GED7 = `0 HEAD
 
 test('7.0 OBJE pointers resolve to top-level OBJE records; dangling ones are dropped', () => {
   const { indi } = parseGedcom(GED7)
-  const photo = { file: 'media/tamsin.jpeg', title: 'Tamsin in 1917', form: 'image/jpeg' }
+  const photo = { obje: 'O1', file: 'media/tamsin.jpeg', title: 'Tamsin in 1917', form: 'image/jpeg' }
   assert.deepEqual(indi.get('I1').media, [photo])
   assert.deepEqual(indi.get('I2').media, [photo])
   assert.deepEqual(indi.get('I1').notes, [])
 })
 
-test('an OBJE link keeps its own CROP and TITL, without touching the shared record', () => {
+test('an OBJE link keeps its record id, its own CROP and TITL, without touching the shared record', () => {
   const { indi } = parseGedcom(`0 @I1@ INDI
 1 OBJE @O1@
 2 CROP
@@ -164,7 +164,7 @@ test('an OBJE link keeps its own CROP and TITL, without touching the shared reco
 2 TITL The picnic
 0 TRLR
 `)
-  const photo = { file: 'picnic.jpg', title: 'The picnic', form: '' }
+  const photo = { obje: 'O1', file: 'picnic.jpg', title: 'The picnic', form: '' }
   assert.deepEqual(indi.get('I1').media, [{ ...photo, caption: 'Second from left', crop: { top: 320, left: 730, height: 480, width: 180 } }])
   assert.deepEqual(indi.get('I2').media, [{ ...photo, crop: { left: 12 } }])
   assert.deepEqual(indi.get('I3').media, [photo])
