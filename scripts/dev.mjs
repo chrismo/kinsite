@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url'
 import { execFileSync } from 'node:child_process'
 import { loadConfig } from '../lib/config.mjs'
 import { createServer } from './serve.mjs'
+import { whoHandler } from './who.mjs'
 
 const repo = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
 const here = process.env.INIT_CWD ?? process.cwd()
@@ -31,7 +32,10 @@ function rebuild() {
 let out = rebuild()
 if (!out) process.exit(1)
 
-const server = createServer(() => out, state).listen(port, () => console.log(`http://localhost:${server.address().port}`))
+const server = createServer(() => out, state, whoHandler(configFile)).listen(port, () => {
+  const url = `http://localhost:${server.address().port}`
+  console.log(`${url}\nidentify people in photos: ${url}/who`)
+})
 
 let timer
 const schedule = () => {

@@ -14,7 +14,8 @@ Needs Node 22 or later; no dependencies. Live demo: https://chrismo.github.io/ki
 node build.mjs sample/kinsite.config.json   # build the fictional sample tree into site/
 open site/index.html
 npm run dev                                  # preview the sample at http://localhost:4000 (PORT=... to change); rebuilds and reloads on edits
-npm run dev -- my/kinsite.config.json        # the same for your own tree
+npm run dev -- my/kinsite.config.json        # the same for your own tree; /who places people in photos (see "Photos")
+npx kinsite dev my/kinsite.config.json      # the same, with kinsite installed from npm
 node build.mjs diff sample/kinsite.config.json old.ged   # what changed on the site since old.ged (see "What changed")
 node build.mjs news stamp kinsite.config.json old.ged    # record a deploy's changes for the What's new page (see "What's new")
 npm test
@@ -43,6 +44,7 @@ For your own tree, write a `kinsite.config.json` next to your GEDCOM:
 | `citations`       | Show source citations on person pages; event notes follow `notes`             | `true`                 |
 | `notes`           | Show person and event notes; a citation's own notes go with the citation       | `true`                 |
 | `news`            | Directory of What's new entries and stamped changes (see "What's new")        | unset: no page         |
+| `who`             | Directory for identify-mode sessions (see "Photos")                           | `who`                  |
 
 Relative paths resolve against the config file's directory. `FOCUS=I3` or `OUT=dir` in
 the environment override the config for one run. `SINCE=old.ged` previews unpublished
@@ -161,6 +163,39 @@ photo" lists the outlined people by number, left to right, and "Also in this pho
 yet placed)" lists the people linked without a crop, so readers can see who still needs
 a place. With `anonymizeLiving`, a photo shared with a living person is withheld from
 everyone, so it has no page.
+
+**Placing people in a photo.** While `npm run dev` (or `kinsite dev`) runs, http://localhost:4000/who lists
+every image `OBJE` in the GEDCOM, linked to anyone or not, with how many people are
+placed and how many are still to place. Open one to identify who's in it:
+
+- Drag on the photo to draw a box around someone. Drag a box to move it, or its
+  corner to resize it.
+- Pick a box to see a close-up of it, and search for who it is. The search lists the
+  people linked to the photo first, then the people alive in the year it was taken.
+  That year comes from the first four-digit number in the `OBJE` title, and you can
+  change it on the page.
+- An answer can also be "Someone not in the tree" or "Not sure". "This is a guess"
+  marks a name you aren't sure of. Each box has a caption, which becomes the link's
+  `TITL`, and notes.
+- The lists below the photo sort the boxes into placed, guessed, unknown and to place.
+  People linked to the photo who have no box yet count as to place.
+- "For your GEDCOM" gives the `OBJE` link lines, with `CROP` and `TITL`, for each placed
+  person whose link is new or differs from the GEDCOM. Copy them into your genealogy
+  app, or under that person's record in the file.
+
+kinsite never writes the GEDCOM. A photo's boxes, answers and notes save as you go to
+`<OBJE id>.json` in the config's `who` folder, such as `who/O2.json`. Guesses, unknowns
+and notes stay only in that file, and committing it is up to you.
+
+A new session starts from the crops already in the GEDCOM. The session also remembers
+the GEDCOM's crops as it last saw them. If you then move or add a crop in your
+genealogy app, the next visit takes the new crop for that person's box and says so.
+Boxes you've changed and not yet pasted are kept. The session also records the
+photo's file. If the `OBJE` with that ID now names a different file, as happens when
+an app renumbers IDs on export, the page warns you and saves nothing until you
+either move that session aside or say its boxes are for this photo.
+The page shows the whole tree, living people included, so it answers only on your
+own machine, at `localhost`.
 
 ## What changed
 
