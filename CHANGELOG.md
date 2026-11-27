@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **A photo keeps its title.** A person's own `TITL` on an `OBJE` link used to
+  replace the photo's title, so a crop was captioned only "Second from left". Now
+  the caption gives the photo's title with the link's `TITL` under it. The alt text
+  describes the image: "<name> in <photo title>" for a crop, and the photo's title
+  for a whole image. (#36)
 - **Long URLs wrap on phones.** A long web address in a note or citation used to
   widen the page, so it scrolled sideways on a phone. Now it breaks onto the next
   line. (#40)

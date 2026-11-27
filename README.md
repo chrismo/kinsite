@@ -133,7 +133,8 @@ record's `TITL`, and lists other files as documents. Files are copied into the s
 they are.
 
 **One person in a group photo.** A `CROP` under the person's `OBJE` link marks their
-part of a shared image, and a `TITL` there captions it for that person:
+part of a shared image. A `TITL` there adds a line under the photo's title for that
+person, and the image's alt text names them, as in "Corwin Quill in The harvest show":
 
 ```
 0 @I3@ INDI
