@@ -4,7 +4,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import http from 'node:http'
-import { spawn } from 'node:child_process'
+import { spawn, spawnSync } from 'node:child_process'
 import { createServer, RELOAD_SCRIPT } from '../scripts/serve.mjs'
 
 let root, server, state
@@ -76,7 +76,7 @@ test('/__version reports the build version', async () => {
   assert.equal((await get('/__version')).body, '2')
 })
 
-test('npm run dev takes a config, passes SINCE through, rebuilds the preview as entries change, and serves /who', async () => {
+test('kinsite dev takes a config, passes SINCE through, rebuilds the preview as entries change, and serves /who', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kinsite-dev-since-'))
   const ada = date => `0 @I1@ INDI\n1 NAME Ada /Fenwick/\n1 BIRT\n2 DATE ${date}\n2 PLAC Marrowby\n1 DEAT\n2 DATE 1920\n0 TRLR\n`
   fs.writeFileSync(path.join(dir, 'old.ged'), ada('1859'))
@@ -84,7 +84,7 @@ test('npm run dev takes a config, passes SINCE through, rebuilds the preview as 
   fs.mkdirSync(path.join(dir, 'news'))
   fs.writeFileSync(path.join(dir, 'news', 'first.md'), 'First entry.\n')
   fs.writeFileSync(path.join(dir, 'kinsite.config.json'), JSON.stringify({ gedcom: 'tree.ged', news: 'news' }))
-  const dev = spawn(process.execPath, [path.join(import.meta.dirname, '../scripts/dev.mjs'), 'kinsite.config.json'], {
+  const dev = spawn(process.execPath, [path.join(import.meta.dirname, '../build.mjs'), 'dev', 'kinsite.config.json'], {
     cwd: dir, env: { ...process.env, INIT_CWD: dir, PORT: '0', SINCE: 'old.ged' }, stdio: ['ignore', 'pipe', 'inherit'],
   })
   try {
@@ -108,4 +108,12 @@ test('npm run dev takes a config, passes SINCE through, rebuilds the preview as 
     dev.kill()
     fs.rmSync(dir, { recursive: true })
   }
+})
+
+test('kinsite dev needs a config, and the package ships the dev server', () => {
+  const r = spawnSync(process.execPath, [path.join(import.meta.dirname, '../build.mjs'), 'dev'], { encoding: 'utf8' })
+  assert.equal(r.status, 2)
+  assert.match(r.stderr, /kinsite dev path\/to\/kinsite.config.json/)
+  const pkg = JSON.parse(fs.readFileSync(path.join(import.meta.dirname, '../package.json'), 'utf8'))
+  assert.ok(pkg.files.includes('scripts/'))
 })

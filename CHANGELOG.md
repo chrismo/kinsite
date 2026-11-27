@@ -16,8 +16,13 @@
   person, see it close up, and search the tree for who it is. The search lists the
   people linked to the photo, then the people alive when it was taken. The page gives
   `OBJE`/`CROP`/`TITL` lines to paste for each placed person. Boxes, guesses,
-  unknowns and notes save to `who/<OBJE id>.json` beside the config. The GEDCOM is
-  never written. (#30)
+  unknowns and notes save to `<OBJE id>.json` in a `who` folder beside the config,
+  or wherever the new `who` config key says. A crop changed in the GEDCOM later
+  updates its box. A session whose photo now has a different file is flagged. The
+  GEDCOM is never written. (#30)
+- **`kinsite dev path/to/kinsite.config.json`** runs the dev preview and identify
+  mode from the npm package, which now includes the dev server. Before, they were
+  only in a clone of kinsite.
 
 ## 0.4.0
 

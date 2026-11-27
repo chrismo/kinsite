@@ -1,5 +1,5 @@
-// Identify mode for `npm run dev`: draw boxes on a photo, say who is in each, and get OBJE/CROP/TITL lines to paste.
-// Answers are saved to who/<OBJE id>.json beside the config; the GEDCOM is only read.
+// Identify mode for the dev server (`npm run dev`, `kinsite dev`): draw boxes on a photo, say who is in each, and get OBJE/CROP/TITL lines to paste.
+// Answers are saved to <config who folder>/<OBJE id>.json; the GEDCOM is only read.
 import fs from 'node:fs'
 import path from 'node:path'
 import { loadConfig } from '../lib/config.mjs'
@@ -38,7 +38,7 @@ export function seedSession(photo, size) {
     const box = crop && cropBox(crop, size)
     return box ? [{ ...box, who: pid, guess: false, caption, note: '' }] : []
   }).sort((a, b) => a.left - b.left || a.top - b.top)
-  return { year: photo.title.match(/\b\d{4}\b/)?.[0] ?? '', boxes }
+  return { year: photo.title.match(/\b\d{4}\b/)?.[0] ?? '', file: photo.file, base: linkedBoxes(photo, size), boxes }
 }
 
 const WHO = /^(\w+|not in tree|not sure)?$/
@@ -47,12 +47,30 @@ export function cleanSession(raw) {
   if (!raw || typeof raw !== 'object' || !Array.isArray(raw.boxes)) return null
   const px = n => (Number.isFinite(n) ? Math.max(0, Math.round(n)) : 0)
   const text = (s, max) => (typeof s === 'string' ? s.slice(0, max) : '')
+  const rect = b => ({ left: px(b.left), top: px(b.top), width: px(b.width), height: px(b.height) })
+  const base = Object.fromEntries(Object.entries(raw.base && typeof raw.base === 'object' ? raw.base : {})
+    .filter(([pid, l]) => /^\w+$/.test(pid) && l && typeof l === 'object' && typeof l.caption === 'string')
+    .map(([pid, l]) => [pid, { caption: text(l.caption, 500), box: l.box && typeof l.box === 'object' ? rect(l.box) : null }]))
   const boxes = raw.boxes.filter(b => b && typeof b === 'object').slice(0, 1000).map(b => ({
-    left: px(b.left), top: px(b.top), width: px(b.width), height: px(b.height),
+    ...rect(b),
     who: typeof b.who === 'string' && WHO.test(b.who) ? b.who : '', guess: b.guess === true,
     caption: text(b.caption, 500), note: text(b.note, 5000),
   })).filter(b => b.width && b.height)
-  return { year: /^\d{4}$/.test(raw.year) ? raw.year : '', boxes }
+  return { year: /^\d{4}$/.test(raw.year) ? raw.year : '', file: text(raw.file, 1000), base, boxes }
+}
+
+// base is the GEDCOM's links as the session last saw them: a crop changed in the GEDCOM since then wins over the box.
+export function mergeGedcom(session, now) {
+  const boxes = session.boxes.map(b => ({ ...b })), updated = []
+  for (const [pid, link] of Object.entries(now)) {
+    const was = Object.hasOwn(session.base, pid) ? session.base[pid] : null
+    if (!link.box || JSON.stringify(link) === JSON.stringify(was)) continue
+    updated.push(pid)
+    const b = boxes.find(x => x.who === pid)
+    if (b) Object.assign(b, link.box, { caption: link.caption, guess: false })
+    else boxes.push({ ...link.box, who: pid, guess: false, caption: link.caption, note: '' })
+  }
+  return { session: { ...session, base: now, boxes }, updated }
 }
 
 // suggest, groups and linkBlocks also run in the page, so each must stand alone.
@@ -145,19 +163,28 @@ const shell = (title, body, script = '') => `<!doctype html><html lang=en><head>
 
 const count = (n, one, many = one) => `${n} ${n === 1 ? one : many}`
 
-function indexPage(photos, people, dir, mediaRoot) {
+// Without the image's size the GEDCOM crops can't be placed, and merging would forget them.
+function openSession(dir, photo, size) {
+  const saved = readSession(dir, photo.oid)
+  if (!saved) return { session: seedSession(photo, size), saved: false, updated: [], movedFrom: '' }
+  const movedFrom = saved.file && saved.file !== photo.file ? saved.file : ''
+  if (movedFrom || !size) return { session: saved, saved: true, updated: [], movedFrom }
+  return { ...mergeGedcom(saved, linkedBoxes(photo, size)), saved: true, movedFrom }
+}
+
+function indexPage(photos, people, { dir, mediaRoot, shown, folder }) {
   const names = Object.fromEntries(people.map(p => [p.id, p.name]))
   const rows = [...photos.values()].map(photo => {
-    const href = `/who/${photo.oid}`
-    let state = ''
-    let session
+    const href = `/who/${photo.oid}`, size = sizeOf(mediaSource(photo.file, mediaRoot))
+    let state = '', session
     try {
-      session = readSession(dir, photo.oid)
-      if (session) state = ' · saved'
+      const s = openSession(dir, photo, size)
+      session = s.session
+      if (s.saved) state = s.movedFrom ? ` · <b>saved for ${esc(s.movedFrom)}</b>` : ' · saved'
     } catch {
-      state = ` · <b>who/${esc(photo.oid)}.json can't be read</b>`
+      session = seedSession(photo, size)
+      state = ` · <b>${esc(shown(photo.oid))} can't be read</b>`
     }
-    session ??= seedSession(photo, sizeOf(mediaSource(photo.file, mediaRoot)))
     const g = groups(session.boxes, photo.links.map(l => l.pid), names)
     const counts = [count(photo.links.length, 'linked'), count(g.placed.length, 'placed'),
       g.guessed.length && count(g.guessed.length, 'guessed'), g.unknown.length && count(g.unknown.length, 'unknown'),
@@ -166,16 +193,16 @@ function indexPage(photos, people, dir, mediaRoot) {
       ` <span class=yr>${esc(photo.oid)}</span><div class=cnt>${counts}${state}</div></div></li>`
   })
   return shell('Photos to identify', '<p class=back><a href="/">&larr; Site</a></p><h1>Photos to identify</h1>' +
-    '<p class=sub>Draw a box around each person and say who it is. Answers are saved in <code>who/</code> beside the config; ' +
+    `<p class=sub>Draw a box around each person and say who it is. Answers are saved in <code>${esc(folder)}/</code>; ` +
     'the GEDCOM is never changed.</p>' +
     (rows.length ? `<ul class=whos>${rows.join('')}</ul>` : '<p>No image <code>OBJE</code> records in the GEDCOM.</p>'))
 }
 
-function photoPage(photo, data) {
+function photoPage(photo, data, notices) {
   const t = photo.title || path.basename(photo.file), src = `/who/${photo.oid}/image`
   const body = `<p class=back><a href="/who">&larr; All photos</a></p><h1>${esc(t)}</h1>` +
     `<p class=sub>${esc(photo.oid)} &middot; ${esc(photo.file)} &middot; <label>Taken about <input id=year inputmode=numeric maxlength=4 size=4 placeholder=year></label>` +
-    ` &middot; <span id=status></span></p>` +
+    ` &middot; <span id=status></span></p>${notices}` +
     '<p class=hint>Drag on the photo to draw a box around someone. Drag a box to move it, or its corner to resize it.</p>' +
     `<div class=who-grid><div id=stage class=stage><img id=photo src="${src}" alt="${esc(t)}" draggable=false></div>` +
     '<aside id=panel><p id=empty class=sub>Draw a box, or pick one, to say who it is.</p><div id=editor hidden>' +
@@ -194,7 +221,7 @@ const LOCAL_HOST = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/
 const LOCAL_ADDR = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1'])
 
 export function whoHandler(configFile) {
-  const dir = path.join(path.dirname(path.resolve(configFile)), 'who')
+  const home = path.dirname(path.resolve(configFile))
   return (req, res) => {
     const url = req.url.split('?')[0]
     if (url !== '/who' && !url.startsWith('/who/')) return false
@@ -218,33 +245,39 @@ export function whoHandler(configFile) {
     const m = url.match(/^\/who(?:\/(\w+)(\/image)?)?\/?$/)
     if (!m) return send(404, 'not found')
     const [, oid, image] = m
-    const config = loadConfig(configFile)
+    const config = loadConfig(configFile), dir = config.who
+    const shown = oid => path.relative(home, sessionPath(dir, oid))
     const parsed = parseGedcom(fs.readFileSync(config.gedcom, 'utf8'))
     const photos = whoPhotos(parsed), people = peopleList(parsed.indi)
     const photo = oid && photos.get(oid)
     if (oid && !photo) return send(404, 'not found')
-    if (req.method === 'POST' && photo && !image) return save(req, send, photo)
+    if (req.method === 'POST' && photo && !image) return save(req, send, dir, photo)
     if (req.method !== 'GET' && req.method !== 'HEAD') return send(405, 'method not allowed')
-    if (!photo) return send(200, indexPage(photos, people, dir, config.mediaRoot), TYPES['.html'])
+    if (!photo) return send(200, indexPage(photos, people, { dir, mediaRoot: config.mediaRoot, shown, folder: path.relative(home, dir) }), TYPES['.html'])
     const file = mediaSource(photo.file, config.mediaRoot)
     if (image) {
       if (!fs.statSync(file, { throwIfNoEntry: false })?.isFile()) return send(404, 'not found')
       return send(200, fs.readFileSync(file), TYPES[path.extname(file).toLowerCase()])
     }
-    let session
-    try {
-      session = readSession(dir, oid)
-    } catch (e) {
-      return send(500, `who/${oid}.json can't be read (${e.message}). Fix or move it; identify mode won't overwrite it.`)
-    }
     const size = sizeOf(file)
+    let s
+    try {
+      s = openSession(dir, photo, size)
+    } catch (e) {
+      return send(500, `${shown(oid)} can't be read (${e.message}). Fix or move it; identify mode won't overwrite it.`)
+    }
+    const names = Object.fromEntries(people.map(p => [p.id, p.name]))
+    const notices = (s.movedFrom ? `<p class=warn>This session was saved for <code>${esc(s.movedFrom)}</code>, but ${esc(oid)} is now ` +
+      `<code>${esc(photo.file)}</code>. If the GEDCOM's IDs were renumbered, these boxes may belong to another photo: ` +
+      `move <code>${esc(shown(oid))}</code> aside before changing anything.</p>` : '') +
+      (s.updated.length ? `<p class=merged>Updated from the GEDCOM since this session was saved: ${esc(s.updated.map(pid => names[pid]).join(', '))}.</p>` : '')
     send(200, photoPage(photo, {
-      oid, size, saved: !!session, session: session ?? seedSession(photo, size), people,
+      oid, size, saved: s.saved, session: s.session, people, sessionFile: shown(oid),
       linkedIds: photo.links.map(l => l.pid), linked: linkedBoxes(photo, size),
-    }), TYPES['.html'])
+    }, notices), TYPES['.html'])
   }
 
-  function save(req, send, photo) {
+  function save(req, send, dir, photo) {
     // A JSON body makes a cross-site request preflight, which this server never grants.
     if (!/^application\/json\b/.test(req.headers['content-type'] ?? '')) return send(415, 'send JSON')
     if (req.headers.origin && req.headers.origin !== `http://${req.headers.host}`) return send(403, 'forbidden')
@@ -364,7 +397,7 @@ function client(D, suggest, groups, linkBlocks) {
     $('paste').innerHTML = blocks.map((k, n) =>
       `<div class=block><p><b>${h(k.name)}</b> <span class=yr>under <code>0 @${h(k.pid)}@ INDI</code>, ${what[k.status]}</span> ` +
       `<button type=button class=copy data-n=${n}>Copy</button></p><pre>${h(k.text)}</pre></div>`).join('') +
-      `<p class=sub>${blocks.length ? '' : 'Nothing new to paste. '}${same}Guesses, unknowns and notes stay in <code>who/${h(D.oid)}.json</code>.</p>`
+      `<p class=sub>${blocks.length ? '' : 'Nothing new to paste. '}${same}Guesses, unknowns and notes stay in <code>${h(D.sessionFile)}</code>.</p>`
   }
 
   function render() {
@@ -506,6 +539,9 @@ function client(D, suggest, groups, linkBlocks) {
 const WHO_CSS = `
 .wrap{max-width:1180px}
 .hint{color:var(--mut);font-size:.9em;margin:0 0 .6em}
+.warn,.merged{border-radius:8px;padding:8px 12px;margin:.6em 0}
+.warn{background:#fff4d6;border:1px solid #e8c96a}
+.merged{background:#eef4ea;border:1px solid #c9dbbf}
 .sub input{width:4.2em;font:inherit;padding:1px 4px;border:1px solid var(--line);border-radius:4px}
 #status button{font:inherit;font-size:.9em;padding:0 6px}
 .who-grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px;align-items:start}

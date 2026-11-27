@@ -7,7 +7,7 @@ import http from 'node:http'
 import { parseGedcom } from '../lib/gedcom.mjs'
 import { createServer } from '../scripts/serve.mjs'
 import {
-  whoPhotos, peopleList, linkedBoxes, seedSession, cleanSession, suggest, groups, linkBlocks, whoHandler,
+  whoPhotos, peopleList, linkedBoxes, seedSession, cleanSession, mergeGedcom, suggest, groups, linkBlocks, whoHandler,
 } from '../scripts/who.mjs'
 
 const GED = `0 HEAD
@@ -96,14 +96,18 @@ test('a new session starts from the GEDCOM: a box for each crop, and the year fr
     I1: { caption: 'Ada, on the right', box: { left: 500, top: 60, width: 200, height: 300 } },
     I2: { caption: '', box: null },
   })
-  assert.deepEqual(seedSession(photo, SIZE), { year: '1912', boxes: [box(500, 60, 200, 300, { who: 'I1', caption: 'Ada, on the right' })] })
-  assert.deepEqual(seedSession(photo, null), { year: '1912', boxes: [] }, 'no size, no boxes')
-  assert.deepEqual(seedSession(whoPhotos(parsed).get('O4'), SIZE), { year: '', boxes: [] })
+  assert.deepEqual(seedSession(photo, SIZE), {
+    year: '1912', file: 'picnic.png', base: linkedBoxes(photo, SIZE), boxes: [box(500, 60, 200, 300, { who: 'I1', caption: 'Ada, on the right' })],
+  })
+  assert.deepEqual(seedSession(photo, null).boxes, [], 'no size, no boxes')
+  assert.deepEqual(seedSession(whoPhotos(parsed).get('O4'), SIZE), { year: '', file: 'unlinked.png', base: {}, boxes: [] })
 })
 
 test('a saved session is cleaned: whole pixels, known answers, bounded text, no empty boxes', () => {
   assert.deepEqual(cleanSession({
-    year: '1912', extra: 1, boxes: [
+    year: '1912', file: 'picnic.png', extra: 1,
+    base: { I1: { caption: 'Ada', box: { left: 1, top: 2, width: 3, height: 4 } }, I2: { caption: '', box: null }, 'x y': {}, I3: 'nope' },
+    boxes: [
       { left: 10.6, top: -4, width: 20.2, height: 30, who: 'I2', guess: true, caption: 'x'.repeat(600), note: 'n', junk: 1 },
       { left: 1, top: 1, width: 0, height: 9, who: 'I1' },
       { left: 1, top: 1, width: 9, height: 9, who: 'not in tree' },
@@ -112,15 +116,38 @@ test('a saved session is cleaned: whole pixels, known answers, bounded text, no 
       'nope',
     ],
   }), {
-    year: '1912', boxes: [
+    year: '1912', file: 'picnic.png',
+    base: { I1: { caption: 'Ada', box: { left: 1, top: 2, width: 3, height: 4 } }, I2: { caption: '', box: null } },
+    boxes: [
       box(11, 0, 20, 30, { who: 'I2', guess: true, caption: 'x'.repeat(500), note: 'n' }),
       box(1, 1, 9, 9, { who: 'not in tree' }),
       box(1, 1, 9, 9, { who: 'not sure' }),
       box(1, 1, 9, 9),
     ],
   })
-  assert.equal(cleanSession({ year: 'about 1912', boxes: [] }).year, '')
+  assert.deepEqual(cleanSession({ year: 'about 1912', boxes: [] }), { year: '', file: '', base: {}, boxes: [] })
   for (const bad of [null, [], 'x', { boxes: 'x' }, {}]) assert.equal(cleanSession(bad), null, JSON.stringify(bad))
+})
+
+test('a saved session takes crops changed in the GEDCOM since it last saw them, and keeps its own edits', () => {
+  const B = (left, top, width, height) => ({ left, top, width, height })
+  const base = { I1: { caption: 'Ada', box: B(500, 60, 200, 300) }, I2: { caption: '', box: null }, I4: { caption: '', box: B(9, 9, 9, 9) } }
+  const now = { ...base, I2: { caption: 'Bram', box: B(5, 6, 7, 8) }, I4: { caption: 'Dell', box: B(1, 2, 3, 4) } }
+  const session = { year: '1912', file: 'picnic.png', base, boxes: [
+    box(510, 60, 200, 300, { who: 'I1', caption: 'Ada' }),
+    box(9, 9, 9, 9, { who: 'I4', guess: true, note: 'kept' }),
+  ] }
+  const { session: merged, updated } = mergeGedcom(session, now)
+  assert.deepEqual(updated, ['I2', 'I4'])
+  assert.deepEqual(merged, { year: '1912', file: 'picnic.png', base: now, boxes: [
+    box(510, 60, 200, 300, { who: 'I1', caption: 'Ada' }),
+    box(1, 2, 3, 4, { who: 'I4', caption: 'Dell', note: 'kept' }),
+    box(5, 6, 7, 8, { who: 'I2', caption: 'Bram' }),
+  ] })
+  assert.equal(session.boxes[1].left, 9, 'the saved session is not changed in place')
+  const removed = mergeGedcom({ ...session, base: now }, { ...now, I4: { caption: '', box: null } })
+  assert.deepEqual(removed.updated, [], 'a crop removed in the GEDCOM leaves the box for you to decide')
+  assert.equal(removed.session.boxes.length, 2)
 })
 
 test('name search puts people linked to the photo first, then people alive when it was taken', () => {
@@ -175,13 +202,13 @@ const req = (p, { method = 'GET', body, headers = {}, host } = {}) => new Promis
   r.end(body)
 })
 const post = (p, data, headers = { 'content-type': 'application/json' }, more = {}) => req(p, { method: 'POST', body: JSON.stringify(data), headers, ...more })
-const sessionFile = () => path.join(dir, 'who', 'O1.json')
+const sessionFile = () => path.join(dir, 'sessions', 'O1.json')
 
 before(async () => {
   dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kinsite-who-'))
   fs.writeFileSync(path.join(dir, 'tree.ged'), GED.replace('Ada, on the right', 'Ada </script> on the right'))
   fs.writeFileSync(path.join(dir, 'picnic.png'), png(SIZE))
-  fs.writeFileSync(path.join(dir, 'kinsite.config.json'), JSON.stringify({ gedcom: 'tree.ged' }))
+  fs.writeFileSync(path.join(dir, 'kinsite.config.json'), JSON.stringify({ gedcom: 'tree.ged', who: 'sessions' }))
   server = createServer(() => path.join(dir, 'site'), { version: 1 }, whoHandler(path.join(dir, 'kinsite.config.json')))
   await new Promise(r => server.listen(0, '127.0.0.1', r))
 })
@@ -221,8 +248,9 @@ test('/who/O1/image serves the file; unknown photos and odd paths are 404', asyn
   }
 })
 
-test('saving writes who/O1.json beside the config, and the page then opens from it', async () => {
-  const session = { year: '1913', boxes: [box(1, 2, 30, 40, { who: 'I2', guess: true, note: 'Aunt says so' })] }
+test('saving writes the session into the config\'s who folder, and the page then opens from it', async () => {
+  const seeded = JSON.parse((await req('/who/O1')).body.match(/const DATA = (.*?);\n/)[1]).session
+  const session = { ...seeded, year: '1913', boxes: [box(1, 2, 30, 40, { who: 'I2', guess: true, note: 'Aunt says so' })] }
   const r = await post('/who/O1', session)
   assert.equal(r.status, 204)
   const saved = JSON.parse(fs.readFileSync(sessionFile(), 'utf8'))
@@ -232,6 +260,15 @@ test('saving writes who/O1.json beside the config, and the page then opens from 
   assert.equal(data.saved, true)
   assert.deepEqual(data.session, session)
   assert.match((await req('/who')).body, /O1.*0 placed.*1 to place/s, 'counts come from the session')
+})
+
+test('a session saved for another file is flagged, as after the GEDCOM\'s IDs are renumbered', async () => {
+  const saved = fs.readFileSync(sessionFile(), 'utf8')
+  fs.writeFileSync(sessionFile(), saved.replace('"file": "picnic.png"', '"file": "wedding.png"'))
+  assert.match((await req('/who/O1')).body, /class=warn>This session was saved for <code>wedding\.png<\/code>/)
+  assert.match((await req('/who')).body, /O1.*saved for wedding\.png/s)
+  fs.writeFileSync(sessionFile(), saved)
+  assert.doesNotMatch((await req('/who/O1')).body, /class=warn/)
 })
 
 test('a save must be JSON, from this machine, for a known photo', async () => {
@@ -251,7 +288,7 @@ test('a session file that cannot be read is reported, not overwritten', async ()
   fs.writeFileSync(sessionFile(), '{ broken')
   const r = await req('/who/O1')
   assert.equal(r.status, 500)
-  assert.match(r.body, /who\/O1\.json/)
+  assert.match(r.body, /sessions\/O1\.json/)
   assert.equal(fs.readFileSync(sessionFile(), 'utf8'), '{ broken')
 })
 
