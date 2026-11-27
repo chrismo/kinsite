@@ -142,6 +142,35 @@ test('7.0 OBJE pointers resolve to top-level OBJE records; dangling ones are dro
   assert.deepEqual(indi.get('I1').notes, [])
 })
 
+test('an OBJE link keeps its own CROP and TITL, without touching the shared record', () => {
+  const { indi } = parseGedcom(`0 @I1@ INDI
+1 OBJE @O1@
+2 CROP
+3 TOP 320
+3 LEFT 730
+3 HEIGHT 480
+3 WIDTH 180
+2 TITL Second from left
+1 NAME Ada /Fenwick/
+0 @I2@ INDI
+1 OBJE @O1@
+2 CROP
+3 LEFT 12
+3 WIDTH wide
+0 @I3@ INDI
+1 OBJE @O1@
+0 @O1@ OBJE
+1 FILE picnic.jpg
+2 TITL The picnic
+0 TRLR
+`)
+  const photo = { file: 'picnic.jpg', title: 'The picnic', form: '' }
+  assert.deepEqual(indi.get('I1').media, [{ ...photo, caption: 'Second from left', crop: { top: 320, left: 730, height: 480, width: 180 } }])
+  assert.deepEqual(indi.get('I2').media, [{ ...photo, crop: { left: 12 } }])
+  assert.deepEqual(indi.get('I3').media, [photo])
+  assert.equal(indi.get('I1').name, 'Ada Fenwick')
+})
+
 test('7.0 DATE PHRASE is kept, with or without a date value', () => {
   const { indi, fam } = parseGedcom(GED7)
   assert.deepEqual(indi.get('I1').birt, { tag: 'BIRT', val: '', date: '17 FEB 2058', phrase: 'day smudged' })

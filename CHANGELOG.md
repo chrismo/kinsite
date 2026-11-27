@@ -4,6 +4,11 @@
 
 - **Link to one deploy.** Each dated heading on What's new has a faint `#` link
   to itself, to copy and share. (#28)
+- **Group photos show each person's part.** A `CROP` under a person's `OBJE`
+  link shows just that region of a shared photo on their page, linked to the whole
+  image, with the link's own `TITL` as the caption. No image library and no copies:
+  the size comes from the JPEG, PNG, GIF or WebP header (upright, for a JPEG a
+  phone saved sideways) and the crop is done in CSS. (#26)
 
 ## 0.4.0
 

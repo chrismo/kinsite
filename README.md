@@ -124,6 +124,34 @@ line. A child's own `FAMC` comes before a link found only on a family's `CHIL` w
 choosing the main family. Add the missing line to the file to clear the label and the
 warning.
 
+## Photos
+
+A person's page shows each image linked by an `OBJE` pointer, captioned by the `OBJE`
+record's `TITL`, and lists other files as documents. Files are copied into the site as
+they are.
+
+**One person in a group photo.** A `CROP` under the person's `OBJE` link marks their
+part of a shared image, and a `TITL` there captions it for that person:
+
+```
+0 @I3@ INDI
+1 OBJE @O2@
+2 CROP
+3 TOP 100
+3 LEFT 100
+3 HEIGHT 180
+3 WIDTH 140
+2 TITL Corwin, far left
+```
+
+The page shows just that region, at most 260px tall, linked to the whole image. Values
+are pixels of the photo as it's shown, upright: for a JPEG that a phone saved sideways
+with an Exif orientation, measure the turned picture, the way browsers and photo apps
+display it. Sizes are read from JPEG, PNG, GIF and WebP files. A missing `LEFT` or `TOP` is 0, and a missing `WIDTH`
+or `HEIGHT` runs to the edge. A crop that runs past the edge is cut off there. If the
+size can't be read from the file, or no part of the crop is inside it, the page shows the
+whole image. Placing or moving a crop isn't listed on What's new.
+
 ## What changed
 
 Before deploying, `kinsite diff kinsite.config.json old.ged` compares an older GEDCOM

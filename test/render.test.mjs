@@ -149,6 +149,26 @@ test('personPage puts the chart before the photos and facts, whatever their leng
   assert.ok(html.indexOf('class=card') > chart)
 })
 
+test('a cropped photo shows just its region, linked to the whole image and captioned by the link', () => {
+  const [id, p] = person('I1', 'Ash', '1950')
+  p.media = [
+    { file: 'picnic.png', title: 'The picnic', caption: 'Second from left', crop: { left: 250, top: 100, width: 200, height: 300 } },
+    { file: 'picnic.png', title: 'The picnic', crop: { left: 5000 } },
+    { file: 'odd.png', title: 'Unknown size', crop: { left: 10, width: 20, height: 20 } },
+  ]
+  const indi = new Map([[id, p]])
+  const copied = new Map([['picnic.png', 'media/picnic.png'], ['odd.png', 'media/odd.png']])
+  const sizes = new Map([['picnic.png', { width: 1000, height: 600 }]])
+  const { html } = new Renderer({ indi, fam: new Map(), kin: new Kin(indi, new Map(), 'I1'), copied, sizes }).personPage('I1')
+  const figures = html.match(/<figure>.*?<\/figure>/g)
+  assert.equal(figures[0], '<figure><a class=crop href="media/picnic.png" style="aspect-ratio:200/300;width:min(100%,173px)">' +
+    '<img src="media/picnic.png" alt="Second from left" style="width:500%;left:-125%;top:-33.333%"></a>' +
+    '<figcaption>Second from left</figcaption></figure>')
+  assert.equal(figures[1], '<figure><a href="media/picnic.png"><img src="media/picnic.png" alt="The picnic"></a>' +
+    '<figcaption>The picnic</figcaption></figure>')
+  assert.match(figures[2], /^<figure><a href="media\/odd.png"><img src="media\/odd.png" alt="Unknown size"><\/a>/)
+})
+
 test('indexPage marks people with photos and offers a photos-only filter', () => {
   const p = (id, giv, media = []) => ({ id, giv, surn: 'Thistle', name: `${giv} Thistle`, media, birt: {}, deat: {} })
   const indi = new Map([
