@@ -12,6 +12,12 @@
 - **A page for each shared photo.** The whole image, with a numbered outline on
   each placed person that shows their name on hover, a list of who's in it, and
   the people linked but not yet placed. Each person's thumbnail links there. (#30)
+- **Identify who's in a photo** with `npm run dev`, at `/who`. Draw a box on each
+  person, see it close up, and search the tree for who it is. The search lists the
+  people linked to the photo, then the people alive when it was taken. The page gives
+  `OBJE`/`CROP`/`TITL` lines to paste for each placed person. Boxes, guesses,
+  unknowns and notes save to `who/<OBJE id>.json` beside the config. The GEDCOM is
+  never written. (#30)
 
 ## 0.4.0
 

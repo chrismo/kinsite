@@ -14,7 +14,7 @@ Needs Node 22 or later; no dependencies. Live demo: https://chrismo.github.io/ki
 node build.mjs sample/kinsite.config.json   # build the fictional sample tree into site/
 open site/index.html
 npm run dev                                  # preview the sample at http://localhost:4000 (PORT=... to change); rebuilds and reloads on edits
-npm run dev -- my/kinsite.config.json        # the same for your own tree
+npm run dev -- my/kinsite.config.json        # the same for your own tree; /who places people in photos (see "Photos")
 node build.mjs diff sample/kinsite.config.json old.ged   # what changed on the site since old.ged (see "What changed")
 node build.mjs news stamp kinsite.config.json old.ged    # record a deploy's changes for the What's new page (see "What's new")
 npm test
@@ -161,6 +161,31 @@ photo" lists the outlined people by number, left to right, and "Also in this pho
 yet placed)" lists the people linked without a crop, so readers can see who still needs
 a place. With `anonymizeLiving`, a photo shared with a living person is withheld from
 everyone, so it has no page.
+
+**Placing people in a photo.** While `npm run dev` runs, http://localhost:4000/who lists
+every image `OBJE` in the GEDCOM, linked to anyone or not, with how many people are
+placed and how many are still to place. Open one to identify who's in it:
+
+- Drag on the photo to draw a box around someone. Drag a box to move it, or its
+  corner to resize it.
+- Pick a box to see a close-up of it, and search for who it is. The search lists the
+  people linked to the photo first, then the people alive in the year it was taken.
+  That year comes from the first four-digit number in the `OBJE` title, and you can
+  change it on the page.
+- An answer can also be "Someone not in the tree" or "Not sure". "This is a guess"
+  marks a name you aren't sure of. Each box has a caption, which becomes the link's
+  `TITL`, and notes.
+- The lists below the photo sort the boxes into placed, guessed, unknown and to place.
+  People linked to the photo who have no box yet count as to place.
+- "For your GEDCOM" gives the `OBJE` link lines, with `CROP` and `TITL`, for each placed
+  person whose link is new or differs from the GEDCOM. Copy them into your genealogy
+  app, or under that person's record in the file.
+
+kinsite never writes the GEDCOM. A photo's boxes, answers and notes save as you go to
+`who/<OBJE id>.json` beside the config, such as `who/O2.json`. They start from the crops already in the GEDCOM.
+Guesses, unknowns and notes stay only in that file, and committing it is up to you.
+The page shows the whole tree, living people included, so it answers only on your
+own machine, at `localhost`.
 
 ## What changed
 

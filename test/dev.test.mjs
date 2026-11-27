@@ -76,7 +76,7 @@ test('/__version reports the build version', async () => {
   assert.equal((await get('/__version')).body, '2')
 })
 
-test('npm run dev takes a config, passes SINCE through, and rebuilds the preview as entries change', async () => {
+test('npm run dev takes a config, passes SINCE through, rebuilds the preview as entries change, and serves /who', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kinsite-dev-since-'))
   const ada = date => `0 @I1@ INDI\n1 NAME Ada /Fenwick/\n1 BIRT\n2 DATE ${date}\n2 PLAC Marrowby\n1 DEAT\n2 DATE 1920\n0 TRLR\n`
   fs.writeFileSync(path.join(dir, 'old.ged'), ada('1859'))
@@ -103,6 +103,7 @@ test('npm run dev takes a config, passes SINCE through, and rebuilds the preview
     fs.writeFileSync(path.join(dir, 'news', 'second.md'), 'Second entry.\n')
     for (let i = 0; i < 50 && !(await page()).includes('Second entry.'); i++) await new Promise(r => setTimeout(r, 100))
     assert.match(await page(), /Second entry\./)
+    assert.match(await fetch(`http://localhost:${port}/who`).then(r => r.text()), /Photos to identify/)
   } finally {
     dev.kill()
     fs.rmSync(dir, { recursive: true })
