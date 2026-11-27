@@ -219,10 +219,41 @@ test('a photo page outlines each placed person, numbered left to right, and list
 test('a photo page with outlines has a checked box under the photo that hides them all when unticked', () => {
   const html = picnicSite().photoPage('O7')
   assert.match(html, /<\/div><label class=outlines><input type=checkbox checked> Show outlines<\/label><h2>In this photo/)
-  assert.match(CSS, /\.stage:has\(\+ \.outlines input:not\(:checked\)\) a\.who\{display:none\}/)
+  assert.match(CSS, /\.stage:has\(\+ \.outlines input:not\(:checked\)\) a\.who:not\(\.on\)\{display:none\}/)
   const r = picnicSite()
   r.sizes.delete('picnic.png')
   assert.doesNotMatch(r.photoPage('O7'), /class=outlines/)
+})
+
+test('hovering a name in "In this photo" lights its outline, and hovering an outline lights its name', () => {
+  const html = picnicSite().photoPage('O7')
+  const fake = () => {
+    const on = new Set(), h = {}
+    return { on, h, classList: { toggle: (c, v) => v ? on.add(c) : on.delete(c) }, addEventListener: (t, f) => { h[t] = f } }
+  }
+  const W = [fake(), fake()], P = [fake(), fake()], win = {}
+  const all = { '.stage a.who': W, 'ol.placed li': P }
+  new Function('document', 'addEventListener', html.match(/<script>([^]*?)<\/script>/)[1])(
+    { querySelectorAll: sel => all[sel] }, (t, f) => { win[t] = f })
+  const lit = () => [...W, ...P].map(e => +e.on.has('on')).join('')
+  P[1].h.mouseenter()
+  assert.equal(lit(), '0101')
+  P[1].h.mouseleave()
+  assert.equal(lit(), '0000')
+  W[0].h.mouseenter()
+  assert.equal(lit(), '1010')
+  P[0].h.focusin({ target: { matches: () => true } })
+  win.pageshow()
+  assert.equal(lit(), '0000', 'Back to a page left mid-hover starts with nothing lit')
+  P[1].h.focusin({ target: { matches: sel => sel !== ':focus-visible' } })
+  assert.equal(lit(), '0000', 'a mouse click focusing a name does not light it')
+  P[1].h.focusin({ target: { matches: sel => sel === ':focus-visible' } })
+  assert.equal(lit(), '0101')
+  P[1].h.focusout()
+  assert.equal(lit(), '0000')
+  assert.match(CSS, /\.stage a\.who\.on span[,{]/)
+  assert.match(CSS, /\.stage:has\(\+ \.outlines input:not\(:checked\)\) a\.who:not\(\.on\)\{display:none\}/)
+  assert.match(CSS, /ol\.placed li\.on\{/)
 })
 
 test('a photo page without a readable size lists everyone as not yet placed', () => {
@@ -497,5 +528,5 @@ test('long words such as URLs wrap instead of widening the page on a phone', () 
 
 test('a clicked link does not keep its hover-only label after Back; keyboard focus still shows it', () => {
   assert.doesNotMatch(CSS, /:focus\b(?!-)/)
-  assert.match(CSS, /\.stage a\.who:focus-visible span\{display:block\}/)
+  assert.match(CSS, /\.stage a\.who:focus-visible span[,{]/)
 })

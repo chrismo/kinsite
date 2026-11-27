@@ -160,7 +160,9 @@ anyone has a `CROP` of, gets a page of its own, and each of those people's thumb
 links to it. The page shows the whole image with a faint numbered outline on each
 cropped person; hovering or focusing an outline shows their name and the link's `TITL`,
 so a caption like "(unconfirmed)" says how sure the placement is. A "Show outlines"
-box under the photo, ticked to start, can be unticked to see the photo plain. Below it, "In this
+box under the photo, ticked to start, can be unticked to see the photo plain. Hovering a
+name in the list lights that person's outline, even with outlines unticked, and hovering
+an outline lights the name. Below it, "In this
 photo" lists the outlined people by number, left to right, and "Also in this photo (not
 yet placed)" lists the people linked without a crop, so readers can see who still needs
 a place. With `anonymizeLiving`, a photo shared with a living person is withheld from
