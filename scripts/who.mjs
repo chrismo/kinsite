@@ -139,7 +139,7 @@ export function readSession(dir, oid) {
 function saveSession(dir, photo, session) {
   fs.mkdirSync(dir, { recursive: true })
   const file = sessionPath(dir, photo.oid)
-  fs.writeFileSync(file + '.tmp', JSON.stringify({ obje: photo.oid, file: photo.file, ...session }, null, 2) + '\n')
+  fs.writeFileSync(file + '.tmp', JSON.stringify({ obje: photo.oid, ...session, file: photo.file }, null, 2) + '\n')
   fs.renameSync(file + '.tmp', file)
 }
 
@@ -251,7 +251,7 @@ export function whoHandler(configFile) {
     const photos = whoPhotos(parsed), people = peopleList(parsed.indi)
     const photo = oid && photos.get(oid)
     if (oid && !photo) return send(404, 'not found')
-    if (req.method === 'POST' && photo && !image) return save(req, send, dir, photo)
+    if (req.method === 'POST' && photo && !image) return save(req, send, dir, photo, shown(oid))
     if (req.method !== 'GET' && req.method !== 'HEAD') return send(405, 'method not allowed')
     if (!photo) return send(200, indexPage(photos, people, { dir, mediaRoot: config.mediaRoot, shown, folder: path.relative(home, dir) }), TYPES['.html'])
     const file = mediaSource(photo.file, config.mediaRoot)
@@ -269,15 +269,16 @@ export function whoHandler(configFile) {
     const names = Object.fromEntries(people.map(p => [p.id, p.name]))
     const notices = (s.movedFrom ? `<p class=warn>This session was saved for <code>${esc(s.movedFrom)}</code>, but ${esc(oid)} is now ` +
       `<code>${esc(photo.file)}</code>. If the GEDCOM's IDs were renumbered, these boxes may belong to another photo: ` +
-      `move <code>${esc(shown(oid))}</code> aside before changing anything.</p>` : '') +
+      `move <code>${esc(shown(oid))}</code> aside. Changes won't save until you do, or until you say ` +
+      `<button type=button id=keep>These boxes are for ${esc(photo.file)}</button></p>` : '') +
       (s.updated.length ? `<p class=merged>Updated from the GEDCOM since this session was saved: ${esc(s.updated.map(pid => names[pid]).join(', '))}.</p>` : '')
     send(200, photoPage(photo, {
-      oid, size, saved: s.saved, session: s.session, people, sessionFile: shown(oid),
+      oid, file: photo.file, size, saved: s.saved, session: s.session, people, sessionFile: shown(oid),
       linkedIds: photo.links.map(l => l.pid), linked: linkedBoxes(photo, size),
     }, notices), TYPES['.html'])
   }
 
-  function save(req, send, dir, photo) {
+  function save(req, send, dir, photo, shown) {
     // A JSON body makes a cross-site request preflight, which this server never grants.
     if (!/^application\/json\b/.test(req.headers['content-type'] ?? '')) return send(415, 'send JSON')
     if (req.headers.origin && req.headers.origin !== `http://${req.headers.host}`) return send(403, 'forbidden')
@@ -297,6 +298,10 @@ export function whoHandler(configFile) {
       } catch {}
       if (!session) return send(400, 'not a session')
       try {
+        const was = readSession(dir, photo.oid)?.file
+        if (was && was !== photo.file && session.file !== photo.file) {
+          return send(409, `this session was saved for ${was}. Say the boxes are for ${photo.file}, or move ${shown} aside.`)
+        }
         saveSession(dir, photo, session)
         send(204, '')
       } catch (e) {
@@ -413,6 +418,7 @@ function client(D, suggest, groups, linkBlocks) {
     try {
       const r = await fetch(location.pathname, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(S), keepalive })
       status(r.ok ? 'Saved' : `Not saved: ${await r.text()}`)
+      return r.ok
     } catch {
       status('Not saved: is npm run dev still running?')
     }
@@ -522,6 +528,10 @@ function client(D, suggest, groups, linkBlocks) {
     const b = e.target.closest('.copy')
     if (!b) return
     navigator.clipboard.writeText(blocks[+b.dataset.n].text).then(() => { b.textContent = 'Copied' })
+  })
+  $('keep')?.addEventListener('click', async () => {
+    S.file = D.file
+    if (await save()) $('keep').closest('.warn').remove()
   })
   addEventListener('beforeunload', () => { if (timer) save(true) })
   addEventListener('keydown', e => { if (e.key === 'Escape' && sel >= 0) select(-1) })

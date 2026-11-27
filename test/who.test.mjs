@@ -271,6 +271,31 @@ test('a session saved for another file is flagged, as after the GEDCOM\'s IDs ar
   assert.doesNotMatch((await req('/who/O1')).body, /class=warn/)
 })
 
+test('a session saved for another file is not saved over until it is kept for this photo', async () => {
+  const saved = fs.readFileSync(sessionFile(), 'utf8')
+  const moved = saved.replace('"file": "picnic.png"', '"file": "wedding.png"')
+  fs.writeFileSync(sessionFile(), moved)
+  const session = { ...cleanSession(JSON.parse(moved)), year: '1999' }
+  for (const file of ['wedding.png', '']) {
+    const r = await post('/who/O1', { ...session, file })
+    assert.equal(r.status, 409, file)
+    assert.match(r.body, /saved for wedding\.png/)
+  }
+  assert.equal(fs.readFileSync(sessionFile(), 'utf8'), moved)
+  assert.match((await req('/who/O1')).body, /class=warn/)
+  assert.equal((await post('/who/O1', { ...session, file: 'picnic.png' })).status, 204)
+  assert.equal(JSON.parse(fs.readFileSync(sessionFile(), 'utf8')).year, '1999')
+  assert.doesNotMatch((await req('/who/O1')).body, /class=warn/)
+  fs.writeFileSync(sessionFile(), saved)
+})
+
+test('a save records the photo\'s current file', async () => {
+  const saved = fs.readFileSync(sessionFile(), 'utf8')
+  assert.equal((await post('/who/O1', { year: '', boxes: [] })).status, 204)
+  assert.equal(JSON.parse(fs.readFileSync(sessionFile(), 'utf8')).file, 'picnic.png')
+  fs.writeFileSync(sessionFile(), saved)
+})
+
 test('a save must be JSON, from this machine, for a known photo', async () => {
   const kept = fs.readFileSync(sessionFile(), 'utf8')
   const ok = { year: '', boxes: [] }
@@ -289,6 +314,7 @@ test('a session file that cannot be read is reported, not overwritten', async ()
   const r = await req('/who/O1')
   assert.equal(r.status, 500)
   assert.match(r.body, /sessions\/O1\.json/)
+  assert.equal((await post('/who/O1', { year: '', boxes: [] })).status, 500)
   assert.equal(fs.readFileSync(sessionFile(), 'utf8'), '{ broken')
 })
 

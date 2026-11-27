@@ -192,8 +192,8 @@ the GEDCOM's crops as it last saw them. If you then move or add a crop in your
 genealogy app, the next visit takes the new crop for that person's box and says so.
 Boxes you've changed and not yet pasted are kept. The session also records the
 photo's file. If the `OBJE` with that ID now names a different file, as happens when
-an app renumbers IDs on export, the page warns you. Move that session aside before
-changing anything.
+an app renumbers IDs on export, the page warns you and saves nothing until you
+either move that session aside or say its boxes are for this photo.
 The page shows the whole tree, living people included, so it answers only on your
 own machine, at `localhost`.
 
