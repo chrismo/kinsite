@@ -91,3 +91,11 @@ test('notes default to shown and can be turned off', () => {
   fs.rmSync(a.dir, { recursive: true })
   fs.rmSync(b.dir, { recursive: true })
 })
+
+test('identify-mode sessions default to who/ beside the config, and resolve like the other paths', () => {
+  const a = configFile({ gedcom: 'tree.ged' }), b = configFile({ gedcom: 'tree.ged', who: 'sources/photos' })
+  assert.equal(loadConfig(a.file).who, path.join(a.dir, 'who'))
+  assert.equal(loadConfig(b.file).who, path.join(b.dir, 'sources/photos'))
+  assert.throws(() => loadConfig(configFile({ gedcom: 'tree.ged', who: true }).file), /who must be a directory path/)
+  for (const { dir } of [a, b]) fs.rmSync(dir, { recursive: true })
+})
