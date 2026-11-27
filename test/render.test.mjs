@@ -1,6 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { esc, yr, life, when, Renderer } from '../lib/render.mjs'
+import { CSS } from '../lib/css.mjs'
 import { Kin } from '../lib/kin.mjs'
 import { anonymize } from '../lib/living.mjs'
 import { CONTACT } from '../lib/redact.mjs'
@@ -479,4 +480,8 @@ test('a photo is captioned by its title, then the link\'s caption; alt text desc
     'The picnic',
     'Ash, far right',
   ])
+})
+
+test('long words such as URLs wrap instead of widening the page on a phone', () => {
+  assert.match(CSS, /\bbody\{[^}]*overflow-wrap:break-word/)
 })
