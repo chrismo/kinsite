@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **See a group photo plain.** A photo page has a "Show outlines" box under the
+  photo. It starts ticked; untick it to hide the numbered outlines, which can
+  crowd a photo of many people.
 - **A photo's name labels no longer stick after Back.** Clicking a numbered
   outline on a photo page and then going back used to leave that person's name
   showing until something else was clicked. Now a name shows only on hover or

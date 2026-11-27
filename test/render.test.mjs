@@ -216,6 +216,15 @@ test('a photo page outlines each placed person, numbered left to right, and list
     '<li><a href="I4.html">Dee Zed</a> <span class=yr>(1965–)</span></li>')
 })
 
+test('a photo page with outlines has a checked box under the photo that hides them all when unticked', () => {
+  const html = picnicSite().photoPage('O7')
+  assert.match(html, /<\/div><label class=outlines><input type=checkbox checked> Show outlines<\/label><h2>In this photo/)
+  assert.match(CSS, /\.stage:has\(\+ \.outlines input:not\(:checked\)\) a\.who\{display:none\}/)
+  const r = picnicSite()
+  r.sizes.delete('picnic.png')
+  assert.doesNotMatch(r.photoPage('O7'), /class=outlines/)
+})
+
 test('a photo page without a readable size lists everyone as not yet placed', () => {
   const r = picnicSite()
   r.sizes.delete('picnic.png')
