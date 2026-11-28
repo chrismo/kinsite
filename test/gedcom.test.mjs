@@ -71,7 +71,7 @@ test('family links strip the @ delimiters', () => {
   assert.equal(p.famc, null, 'F2 has no record, so it is not the main family')
   assert.deepEqual(p.fams, ['F1'])
   assert.deepEqual(parseGedcom(GED).fam.get('F1'), {
-    id: 'F1', husb: 'I1', wife: 'I2', chil: ['I3'], marrs: [{ tag: 'MARR', date: '1915', plac: 'Marrowby' }],
+    id: 'F1', husb: 'I1', wife: 'I2', chil: ['I3'], marrs: [{ tag: 'MARR', date: '1915', plac: 'Marrowby' }], media: [],
   })
 })
 
@@ -136,7 +136,7 @@ const GED7 = `0 HEAD
 
 test('7.0 OBJE pointers resolve to top-level OBJE records; dangling ones are dropped', () => {
   const { indi } = parseGedcom(GED7)
-  const photo = { obje: 'O1', file: 'media/tamsin.jpeg', title: 'Tamsin in 1917', form: 'image/jpeg' }
+  const photo = { obje: 'O1', file: 'media/tamsin.jpeg', title: 'Tamsin in 1917', form: 'image/jpeg', medi: 'PHOTO' }
   assert.deepEqual(indi.get('I1').media, [photo])
   assert.deepEqual(indi.get('I2').media, [photo])
   assert.deepEqual(indi.get('I1').notes, [])
@@ -164,7 +164,7 @@ test('an OBJE link keeps its record id, its own CROP and TITL, without touching 
 2 TITL The picnic
 0 TRLR
 `)
-  const photo = { obje: 'O1', file: 'picnic.jpg', title: 'The picnic', form: '' }
+  const photo = { obje: 'O1', file: 'picnic.jpg', title: 'The picnic', form: '', medi: '' }
   assert.deepEqual(indi.get('I1').media, [{ ...photo, caption: 'Second from left', crop: { top: 320, left: 730, height: 480, width: 180 } }])
   assert.deepEqual(indi.get('I2').media, [{ ...photo, crop: { left: 12 } }])
   assert.deepEqual(indi.get('I3').media, [photo])

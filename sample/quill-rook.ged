@@ -36,6 +36,7 @@
 3 PAGE Plot 14
 1 SOUR @S3@
 2 PAGE Marrowby, 1851, sheet 4
+2 OBJE @O3@
 1 FAMS @F1@
 0 @I2@ INDI
 1 NAME Briony /Thistle/
@@ -227,6 +228,11 @@
 1 FILE media/harvest-show.png
 2 FORM image/png
 2 TITL The Quills at the harvest show, about 1912 (placeholder image)
+0 @O3@ OBJE
+1 FILE media/census-1851-sheet-4.png
+2 FORM image/png
+3 MEDI PHOTO
+2 TITL Census of Westmarch, Marrowby 1851, sheet 4 (placeholder image)
 0 @S1@ SOUR
 1 TITL Quill family Bible
 0 @S2@ SOUR
