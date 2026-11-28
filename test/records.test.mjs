@@ -180,6 +180,17 @@ test('byte-identical files, copied once, show once on a page', () => {
   assert.deepEqual(imgs(section(html, 'Records')), ['draft-card.jpg', 'census-1920.jpg'])
 })
 
+test('a record linked twice without a crop, from the person and a family, shows once', () => {
+  for (const [obje, h2] of [['O8', 'Photos'], ['O2', 'Records']]) {
+    const g = GED.replace('1 FAMS @F1@\n0 @I2@', `1 FAMS @F1@\n1 OBJE @${obje}@\n0 @I2@`).replace('1 OBJE @O8@\n2 TITL On the chapel steps', `1 OBJE @${obje}@`)
+    const { indi, fam } = parseGedcom(g)
+    const r = new Renderer({ indi, fam, kin: new Kin(indi, fam, 'I1'), copied: new Map(FILES.map(f => [f, `media/${f}`])) })
+    const all = imgs(r.personPage('I1').html)
+    const file = obje === 'O8' ? 'wedding.jpg' : 'draft-card.jpg'
+    assert.equal(all.filter(f => f === file).length, 1, `${obje} in ${h2}`)
+  }
+})
+
 test('"with photos" counts photos only: someone with only records is not marked', () => {
   const r = site()
   assert.ok(r.personPage('I1').withPhoto)
@@ -229,11 +240,21 @@ test('the build copies the scans it shows, a byte-identical file once, and nothi
   assert.deepEqual(build({ citations: false }).files, ['draft-card.jpg', 'portrait.jpg', 'wedding.jpg', 'yearbook.jpg'])
 })
 
-test('the build warns about OBJE records no page shows: unlinked or missing their file, not ones hidden on purpose', () => {
-  assert.deepEqual(build().log.filter(s => s.includes('OBJE')), ['  warning: 1 OBJE record appears on no page: @O10@'])
+test('the build warns about OBJE records no page shows, missing files apart from unlinked records, not ones hidden on purpose', () => {
+  const objeLog = b => b.log.filter(s => s.includes('OBJE'))
+  assert.deepEqual(objeLog(build()), ['  warning: 1 OBJE record is linked from nothing: @O10@'])
   const gone = build({}, g => g.replace('1 FILE draft-card.jpg', '1 FILE lost/draft-card.jpg'))
-  assert.deepEqual(gone.log.filter(s => s.includes('OBJE')), ['  warning: 2 OBJE records appear on no page: @O2@, @O10@'])
-  assert.deepEqual(build({ citations: false }).log.filter(s => s.includes('OBJE')), ['  warning: 1 OBJE record appears on no page: @O10@'])
+  assert.deepEqual(objeLog(gone), [
+    '  warning: 1 OBJE record has no file to copy: @O2@ (lost/draft-card.jpg)',
+    '  warning: 1 OBJE record is linked from nothing: @O10@',
+  ])
+  assert.deepEqual(objeLog(build({ citations: false })), ['  warning: 1 OBJE record is linked from nothing: @O10@'])
+})
+
+test('a long OBJE warning names the first ten and counts the rest', () => {
+  const extra = Array.from({ length: 13 }, (_, i) => `0 @X${i + 1}@ OBJE\n1 FILE spare-${i + 1}.jpg\n`).join('')
+  const [line] = build({}, g => g.replace('0 TRLR', `${extra}0 TRLR`)).log.filter(s => s.includes('OBJE'))
+  assert.equal(line, '  warning: 14 OBJE records are linked from nothing: @O10@, @X1@, @X2@, @X3@, @X4@, @X5@, @X6@, @X7@, @X8@, @X9@ and 4 more')
 })
 
 test('the build summary counts people with photos, not records', () => {

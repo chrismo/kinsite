@@ -13,9 +13,11 @@
   photos: `MEDI PHOTO` or no type, or a `CROP` of any image. Draft cards,
   certificates, gravestones and anything a citation links go in a Records gallery
   after the life events. "With photos" counts photos only. Two `OBJE` records with
-  byte-identical files show once, and the file is copied once. (#61)
+  byte-identical files show once, and the file is copied once; so does one image
+  linked twice on a page, unless the second link is a `CROP`. (#61)
 - **A warning for unseen images.** The build lists `OBJE` records that no page shows,
-  because nothing links them or their file is missing. (#61)
+  in two lines: files that are missing, and records nothing links. Each names the
+  first ten and counts the rest. (#61)
 
 - **More than one marriage record.** A family with several `MARR` lines used to
   keep one, made of the last one's date and place and any of their phrases. Now
