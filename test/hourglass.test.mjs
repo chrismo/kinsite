@@ -7,7 +7,7 @@ import { Renderer } from '../lib/render.mjs'
 // I1+I6 -> I14, I15. I9 stands alone. Birch: I20's family F20 has children but no parents.
 // Vale: I30 has six siblings, three spouses and seven children.
 const P = (id, name, famc = null, fams = []) => [id, { id, name, famc, fams, birt: {}, deat: {} }]
-const F = (id, husb, wife, chil = []) => [id, { id, husb, wife, chil, marr: {} }]
+const F = (id, husb, wife, chil = []) => [id, { id, husb, wife, chil, marrs: [] }]
 const indi = new Map([
   P('I10', 'Abner Quill', null, ['F10']), P('I11', 'Briony Quill', null, ['F10']),
   P('I12', 'Dorrit Rook', null, ['F11']), P('I13', 'Elspet Rook', null, ['F11']),
