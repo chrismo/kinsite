@@ -50,7 +50,7 @@ test('when spells out GEDCOM ranges and qualifiers', () => {
   assert.equal(when({ date: '6 JUN 2047' }), '6 JUN 2047')
 })
 
-test('eventsHtml orders birth, baptism, other events, then death and burial; an EVEN of type Living reads Residence', () => {
+test('eventsHtml orders birth, baptism, other events by year, then death and burial; an EVEN of type Living reads Residence', () => {
   const r = new Renderer({})
   const html = r.eventsHtml({ events: [
     { tag: 'BURI', val: '', plac: 'Saltmere churchyard' },
@@ -67,11 +67,11 @@ test('eventsHtml orders birth, baptism, other events, then death and burial; an 
   assert.deepEqual(lines, [
     'Born 1890 &middot; Marrowby, QX',
     'Christened 1891',
-    'Residence Rooms above the bakery &middot; 1900',
-    'Harvest show Blue ribbon',
-    'Residence 1970',
-    'Occupation Wheelwright',
     'Emigrated 1880',
+    'Residence Rooms above the bakery &middot; 1900',
+    'Residence 1970',
+    'Harvest show Blue ribbon',
+    'Occupation Wheelwright',
     'Died date unknown',
     'Buried Saltmere churchyard',
   ])
