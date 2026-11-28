@@ -562,7 +562,7 @@ test('the image dialog has a close button, the caption, and Share, Copy link and
 test('the image dialog nearly fills the screen with room for its footer, and its buttons are big enough to tap', () => {
   assert.match(CSS, /#zoom\[open\]\{display:flex;flex-direction:column\}/)
   assert.match(CSS, /#zoom\{[^}]*width:96vw;height:96vh;height:96dvh;max-width:none;max-height:none/)
-  assert.match(CSS, /#zoom img\{flex:1 1 0;min-height:0;width:100%;object-fit:scale-down;cursor:zoom-out\}/, 'fills the space above the footer, never blown up past its own size')
+  assert.match(CSS, /#zoom img\{flex:1 1 0;min-height:0;width:100%;object-fit:scale-down\}/, 'fills the space above the footer, never blown up past its own size')
   assert.match(CSS, /#zoom::backdrop\{/)
   assert.match(CSS, /#zoom \.x\{[^}]*width:40px;height:40px/)
   assert.match(CSS, /#zoom \.acts button,#zoom \.acts a\{[^}]*min-height:40px/)
