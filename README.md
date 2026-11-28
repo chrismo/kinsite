@@ -95,7 +95,8 @@ preference: the first shown is marked preferred and the rest alternates. Version
 with nothing to show, and those marked `RESN PRIVACY` or `CONFIDENTIAL`, are left out.
 Life spans and the birth-year sort use the first version with a year. With
 `anonymizeLiving`, every birth version counts toward deciding who is living,
-restricted or not.
+restricted or not. A family's marriage works the same way: the spouse line shows the
+first `MARR` shown, marked preferred when there are others, with the rest under it.
 
 Under each event come its notes and citations, numbered: source title, page, and the
 quoted text of the record. Citations on the person record or on the name shown are
@@ -236,11 +237,14 @@ main parent family changes gets one "Now listed as a child of …" line. Tags th
 doesn't show never appear, and neither do marriage notes and citations.
 
 GEDCOM facts have no IDs, so versions of one event on one person (and one `TYPE`, for
-`EVEN`) are matched like this: identical versions are unchanged; the rest are paired in
-file order when they share a date or a place, and read as changed; anything left over
-was added or removed. A fact whose date and place both changed reads as one removal and
-one addition. Notes are matched by text, and citations by source and page, so
-retitling a `SOUR` record changes nothing.
+`EVEN`), or of one family's marriage, are matched like this: identical versions are
+unchanged; the rest are paired in file order when they share a date or a place, and
+read as changed; anything left over was added or removed. A fact whose date and place
+both changed reads as one removal and one addition. Only versions the page shows are
+matched: one with no date, place, value, note or citation is skipped, except a bare
+birth or death with no other version, which the page shows as "date unknown". Notes
+are matched by text, and citations by source and page, so retitling a `SOUR` record
+changes nothing.
 
 The list follows the config's privacy settings, so the same two files can be checked
 against a research site and a public site. With `anonymizeLiving`, nothing is said

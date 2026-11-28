@@ -71,7 +71,7 @@ test('family links strip the @ delimiters', () => {
   assert.equal(p.famc, null, 'F2 has no record, so it is not the main family')
   assert.deepEqual(p.fams, ['F1'])
   assert.deepEqual(parseGedcom(GED).fam.get('F1'), {
-    id: 'F1', husb: 'I1', wife: 'I2', chil: ['I3'], marr: { date: '1915', plac: 'Marrowby' },
+    id: 'F1', husb: 'I1', wife: 'I2', chil: ['I3'], marrs: [{ tag: 'MARR', date: '1915', plac: 'Marrowby' }],
   })
 })
 
@@ -175,7 +175,7 @@ test('7.0 DATE PHRASE is kept, with or without a date value', () => {
   const { indi, fam } = parseGedcom(GED7)
   assert.deepEqual(indi.get('I1').birt, { tag: 'BIRT', val: '', date: '17 FEB 2058', phrase: 'day smudged' })
   assert.deepEqual(indi.get('I1').deat, { tag: 'DEAT', val: '', date: '', phrase: 'about 1960' })
-  assert.deepEqual(fam.get('F1').marr, { date: '', phrase: 'before the war', resn: 'PRIVACY' })
+  assert.deepEqual(fam.get('F1').marrs, [{ tag: 'MARR', date: '', phrase: 'before the war', resn: 'PRIVACY' }])
 })
 
 test('events keep payload, TYPE, DATE and PLAC in file order; contact fields are never read', () => {
@@ -306,4 +306,24 @@ test('citations on the person and on the shown name are person sources, keeping 
     cite('', 'Told by Aunt Wenna\nat the fair'),
   ])
   assert.deepEqual(parseGedcom(GED).indi.get('I1').sources, [])
+})
+
+test('a family keeps every MARR in file order, each with its own date, phrase and place', () => {
+  const { fam } = parseGedcom(`0 HEAD
+0 @F1@ FAM
+1 HUSB @I1@
+1 WIFE @I2@
+1 MARR
+2 DATE 16 JUL 1900
+2 PLAC Springfield
+1 MARR
+2 DATE 5 JUL 1900
+3 PHRASE (9)?
+2 PLAC Springfield
+0 TRLR
+`)
+  assert.deepEqual(fam.get('F1').marrs, [
+    { tag: 'MARR', date: '16 JUL 1900', plac: 'Springfield' },
+    { tag: 'MARR', date: '5 JUL 1900', phrase: '(9)?', plac: 'Springfield' },
+  ])
 })
