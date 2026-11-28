@@ -134,9 +134,9 @@ they are.
 
 **Viewing a photo.** Clicking a photo that opens the image itself, not a photo page,
 shows it nearly full screen over the page, with its title and caption below. Esc, the
-× button or another click on the photo closes it. An icon beside the × opens the image in
-a new tab, and buttons under it share the image's link (on devices with a share sheet) or
-copy it. The big photo on a photo page works the same way. A Cmd-, Ctrl-, Shift- or
+× button or another click on the photo closes it. An icon on the photo's upper right opens
+the image in a new tab. Buttons under it share the image's link (on devices with a share
+sheet), copy it, or open the image in a new tab too. The big photo on a photo page works the same way. A Cmd-, Ctrl-, Shift- or
 Alt-click is left to the browser, to open the image in a new tab or window, and without
 JavaScript a plain click opens the image file as before. Each photo on a person's page also has a
 new-tab icon in its upper right, which opens the whole image file even when the photo

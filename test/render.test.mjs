@@ -205,7 +205,7 @@ test("every thumbnail has a new-tab icon in its upper right that opens the image
     assert.match(r.personPage(pid).html, new RegExp(`</a><a class=tab href="media/${file}.png" target=_blank rel=noopener aria-label="Open in new tab" title="Open in new tab"><svg [^]*?</svg></a></div><figcaption>`))
   }
   assert.match(CSS, /\.photos \.pic\{[^}]*position:relative/)
-  assert.match(CSS, /\.photos \.tab\{position:absolute;top:6px;right:6px;/)
+  assert.match(CSS, /\n\.tab\{position:absolute;top:6px;right:6px;[^}]*background:rgba\(0,0,0,\.35\)/, 'see-through, to hide less of the photo')
 })
 
 test('a photo page outlines each placed person, numbered left to right, and lists who is not yet placed', () => {
@@ -559,12 +559,11 @@ test('a link to an image file opens it in a dialog; links to a photo page do not
 test('the image dialog has a close button, the caption, and Share, Copy link and new-tab controls drawn inline', () => {
   const d = dialogOf(picnicSite().personPage('I5').html)
   assert.match(d, /<button type=button class=x aria-label=Close title=Close><svg /)
-  assert.match(d, /<img alt="">/)
   assert.match(d, /<p class=cap><\/p>/)
   assert.match(d, /<button type=button class=share><svg [^]*?<\/svg>Share<\/button>/)
   assert.match(d, /<button type=button class=copy><svg [^]*?<\/svg>Copy link<\/button>/)
-  assert.match(d, /<\/button><a class=tab target=_blank rel=noopener aria-label="Open in new tab" title="Open in new tab"><svg [^]*?<\/svg><\/a><img /, 'an icon beside the ×')
-  assert.doesNotMatch(d, /<\/svg>Open in new tab/)
+  assert.match(d, /<div class=frame><div class=pic><img alt=""><a class=tab target=_blank rel=noopener aria-label="Open in new tab" title="Open in new tab"><svg [^]*?<\/svg><\/a><\/div><\/div>/, 'an icon on the image itself')
+  assert.match(d, /Copy link<\/button><a class=newtab target=_blank rel=noopener><svg [^]*?<\/svg>Open in new tab<\/a>/, 'and a labeled button in the footer')
   assert.match(d, /<input class=url readonly hidden aria-label="Link to this image">/)
   assert.match(d, /<span class=msg role=status><\/span>/)
   assert.doesNotMatch(d, /https?:|src=/)
@@ -573,11 +572,13 @@ test('the image dialog has a close button, the caption, and Share, Copy link and
 test('the image dialog nearly fills the screen with room for its footer, and its buttons are big enough to tap', () => {
   assert.match(CSS, /#zoom\[open\]\{display:flex;flex-direction:column\}/)
   assert.match(CSS, /#zoom\{[^}]*width:96vw;height:96vh;height:96dvh;max-width:none;max-height:none/)
-  assert.match(CSS, /#zoom img\{flex:1 1 0;min-height:0;width:100%;object-fit:scale-down\}/, 'fills the space above the footer, never blown up past its own size')
+  assert.match(CSS, /#zoom \.frame\{flex:1 1 0;min-height:0;container-type:size;[^}]*padding:56px 16px 16px\}/, 'fills the space above the footer, below the ×')
+  assert.match(CSS, /#zoom \.pic\{position:relative\}/)
+  assert.match(CSS, /#zoom img\{display:block;max-width:100cqw;max-height:100cqh\}/, 'as big as fits but never past its own size, so the icon sits on its corner')
+  assert.match(CSS, /#zoom \.tab\{top:8px;right:8px;width:40px;height:40px\}/)
   assert.match(CSS, /#zoom::backdrop\{/)
-  assert.match(CSS, /#zoom \.x,#zoom \.tab\{[^}]*width:40px;height:40px/)
-  assert.match(CSS, /#zoom \.tab\{right:56px\}/)
-  assert.match(CSS, /#zoom \.acts button\{[^}]*min-height:40px/)
+  assert.match(CSS, /#zoom \.x\{[^}]*width:40px;height:40px/)
+  assert.match(CSS, /#zoom \.acts button,#zoom \.acts a\{[^}]*min-height:40px/)
   assert.match(CSS, /#zoom \.cap \.cn\{display:block;font-style:italic\}/)
 })
 
@@ -589,9 +590,9 @@ function zoomPage(html, { share, clipboard, opener = 'figure' } = {}) {
   const cap = { innerHTML: 'The picnic<span class=cn>Eli alone</span>' }
   const link = el({ focused: 0, focus() { this.focused++ }, getAttribute: k => ({ href: 'media/eli.png' })[k],
     querySelector: () => ({ alt: 'Eli alone' }), closest: s => (s === 'figure' && opener === 'figure' ? { querySelector: () => cap } : null) })
-  const parts = { img: el(), '.cap': el({ innerHTML: '' }), 'a.tab': el(), '.url': el({ hidden: true, selected: false, select() { this.selected = true }, focus() {} }),
+  const parts = { img: el(), '.cap': el({ innerHTML: '' }), '.frame': el(), 'a.tab': el(), 'a.newtab': el(), '.url': el({ hidden: true, selected: false, select() { this.selected = true }, focus() {} }),
     '.msg': el({ textContent: '' }), '.share': el(), '.copy': el(), '.x': el() }
-  const D = el({ open: false, querySelector: s => parts[s],
+  const D = el({ open: false, querySelector: s => parts[s], querySelectorAll: s => (s === 'a.tab,a.newtab' ? [parts['a.tab'], parts['a.newtab']] : []),
     showModal() { this.open = true }, close() { if (this.open) { this.open = false; this.h.close?.() } } })
   const win = {}, nav = {}
   if (share) nav.share = share
@@ -615,6 +616,7 @@ test('clicking an image link opens the dialog on that image; the image, ×, the 
   assert.equal(parts.img.alt, 'Eli alone')
   assert.equal(parts['.cap'].innerHTML, 'The picnic<span class=cn>Eli alone</span>')
   assert.equal(parts['a.tab'].href, 'https://kin.example/fam/media/eli.png')
+  assert.equal(parts['a.newtab'].href, 'https://kin.example/fam/media/eli.png')
   D.h.click({ target: parts['.cap'] })
   assert.ok(D.open, 'a click in the footer leaves it open')
   D.h.click({ target: parts.img })
@@ -624,12 +626,17 @@ test('clicking an image link opens the dialog on that image; the image, ×, the 
   D.h.click({ target: D })
   assert.ok(!D.open, 'a click on the backdrop closes it')
   link.h.click(click())
+  D.h.click({ target: parts['.frame'] })
+  assert.ok(!D.open, 'a click beside the image closes it')
+  link.h.click(click())
   parts['.x'].h.click({})
   assert.ok(!D.open)
-  assert.equal(link.focused, 3)
-  link.h.click(click())
-  parts['a.tab'].h.click({})
-  assert.ok(!D.open, 'opening the image in a new tab leaves this page without the dialog')
+  assert.equal(link.focused, 4)
+  for (const tab of ['a.tab', 'a.newtab']) {
+    link.h.click(click())
+    parts[tab].h.click({})
+    assert.ok(!D.open, 'opening the image in a new tab leaves this page without the dialog')
+  }
   link.h.click(click())
   win.pageshow()
   assert.ok(!D.open, 'a page restored by Back starts with the dialog closed')
