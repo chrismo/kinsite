@@ -150,6 +150,20 @@ test('a saved session takes crops changed in the GEDCOM since it last saw them, 
   assert.equal(removed.session.boxes.length, 2)
 })
 
+test('a crop changed in the GEDCOM moves the person\'s placed box, not a guess for them', () => {
+  const B = (left, top, width, height) => ({ left, top, width, height })
+  const base = { I1: { caption: 'Ada', box: B(500, 60, 200, 300) } }
+  const now = { I1: { caption: 'Ada', box: B(1, 2, 3, 4) } }
+  const session = { year: '', file: 'picnic.png', base, boxes: [
+    box(50, 50, 50, 50, { who: 'I1', guess: true, note: 'or is this her?' }),
+    box(500, 60, 200, 300, { who: 'I1', caption: 'Ada' }),
+  ] }
+  assert.deepEqual(mergeGedcom(session, now).session.boxes, [
+    box(50, 50, 50, 50, { who: 'I1', guess: true, note: 'or is this her?' }),
+    box(1, 2, 3, 4, { who: 'I1', caption: 'Ada' }),
+  ])
+})
+
 test('name search puts people linked to the photo first, then people alive when it was taken', () => {
   const people = peopleList(parsed.indi)
   const ids = (q, year = '1912') => suggest(people, q, year, ['I2']).map(p => [p.id, p.tier])
@@ -168,14 +182,26 @@ test('boxes sort into placed, guessed, unknown and to place, with linked people 
     box(0, 0, 9, 9, { who: 'not sure' }), box(0, 0, 9, 9), box(0, 0, 9, 9, { who: 'I9' }),
   ]
   const names = { I1: 'Ada Fenwick', I2: 'Bram Fenwick', I4: 'Dell Moor' }
-  assert.deepEqual(groups(boxes, ['I1', 'I2'], names), { placed: [0], guessed: [1], unknown: [2, 3], open: [4, 5], unboxed: ['I2'] })
+  assert.deepEqual(groups(boxes, ['I1', 'I2'], names), { placed: [0], guessed: [1], unknown: [2, 3], open: [4, 5], unboxed: ['I2'], also: {}, twice: [] })
+})
+
+test('a person in more than one box is noted on each box, and one placed twice is called out', () => {
+  const boxes = [
+    box(0, 0, 9, 9, { who: 'I1' }), box(0, 0, 9, 9, { who: 'I1', guess: true }),
+    box(0, 0, 9, 9, { who: 'I4', guess: true }), box(0, 0, 9, 9, { who: 'I4', guess: true }),
+    box(0, 0, 9, 9, { who: 'I2' }), box(0, 0, 9, 9, { who: 'I2' }), box(0, 0, 9, 9, { who: 'not sure' }), box(0, 0, 9, 9, { who: 'not sure' }),
+  ]
+  const names = { I1: 'Ada Fenwick', I2: 'Bram Fenwick', I4: 'Dell Moor' }
+  const g = groups(boxes, [], names)
+  assert.deepEqual(g.also, { 0: [1], 1: [0], 2: [3], 3: [2], 4: [5], 5: [4] })
+  assert.deepEqual(g.twice, ['I2'])
 })
 
 test('GEDCOM lines for each placed person whose link is new or differs; guesses and unknowns stay out', () => {
   const linked = linkedBoxes(whoPhotos(parsed).get('O1'), SIZE)
   const names = { I1: 'Ada Fenwick', I2: 'Bram Fenwick', I4: 'Dell Moor' }
   const ada = box(500, 60, 200, 300, { who: 'I1', caption: 'Ada, on the right' })
-  assert.deepEqual(linkBlocks('O1', [ada], linked, names), { blocks: [], same: 1 })
+  assert.deepEqual(linkBlocks('O1', [ada], linked, names), { blocks: [], same: 1, twice: [] })
   const out = linkBlocks('O1', [
     { ...ada, caption: '' },
     box(10, 20, 30, 40, { who: 'I2', caption: '@home\nfront row', note: 'notes stay out' }),
@@ -189,6 +215,13 @@ test('GEDCOM lines for each placed person whose link is new or differs; guesses 
     { pid: 'I2', name: 'Bram Fenwick', status: 'changed', text: '1 OBJE @O1@\n2 CROP\n3 TOP 20\n3 LEFT 10\n3 HEIGHT 40\n3 WIDTH 30\n2 TITL @@home front row' },
     { pid: 'I4', name: 'Dell Moor', status: 'new', text: '1 OBJE @O1@\n2 CROP\n3 TOP 2\n3 LEFT 1\n3 HEIGHT 4\n3 WIDTH 3' },
   ])
+})
+
+test('no GEDCOM lines for a person placed in two boxes until one is made a guess', () => {
+  const linked = linkedBoxes(whoPhotos(parsed).get('O1'), SIZE)
+  const names = { I1: 'Ada Fenwick', I2: 'Bram Fenwick' }
+  const out = linkBlocks('O1', [box(1, 2, 3, 4, { who: 'I2' }), box(5, 6, 7, 8, { who: 'I2' }), box(1, 2, 3, 4, { who: 'I2', guess: true })], linked, names)
+  assert.deepEqual(out, { blocks: [], same: 0, twice: ['I2'] })
 })
 
 let dir, server
@@ -268,7 +301,7 @@ test('a session saved for another file is flagged, as after the GEDCOM\'s IDs ar
   assert.match((await req('/who/O1')).body, /class=warn>This session was saved for <code>wedding\.png<\/code>/)
   assert.match((await req('/who')).body, /O1.*saved for wedding\.png/s)
   fs.writeFileSync(sessionFile(), saved)
-  assert.doesNotMatch((await req('/who/O1')).body, /class=warn/)
+  assert.doesNotMatch((await req('/who/O1')).body, /class=warn>This session was saved/)
 })
 
 test('a session saved for another file is not saved over until it is kept for this photo', async () => {
@@ -282,10 +315,10 @@ test('a session saved for another file is not saved over until it is kept for th
     assert.match(r.body, /saved for wedding\.png/)
   }
   assert.equal(fs.readFileSync(sessionFile(), 'utf8'), moved)
-  assert.match((await req('/who/O1')).body, /class=warn/)
+  assert.match((await req('/who/O1')).body, /class=warn>This session was saved/)
   assert.equal((await post('/who/O1', { ...session, file: 'picnic.png' })).status, 204)
   assert.equal(JSON.parse(fs.readFileSync(sessionFile(), 'utf8')).year, '1999')
-  assert.doesNotMatch((await req('/who/O1')).body, /class=warn/)
+  assert.doesNotMatch((await req('/who/O1')).body, /class=warn>This session was saved/)
   fs.writeFileSync(sessionFile(), saved)
 })
 

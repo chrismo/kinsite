@@ -6,6 +6,13 @@
   photo on a photo page, shows it nearly full screen without leaving the page.
   Esc, × or another click on it closes it. Its footer has the caption and
   buttons to share the image's link, copy it, or open the image in a new tab.
+- **One person, one placed box** in `kinsite dev`'s `/who`. Picking someone
+  already placed in another box used to place them twice. Now the new box
+  becomes a guess and stays one while the other is placed. The lists mark each
+  box whose person is in another box. A person already placed twice in a saved
+  session gets no GEDCOM lines until all but one box is a guess. A crop changed
+  in the GEDCOM now moves the person's placed box rather than a guess for them.
+  (#47)
 
 ## 0.5.1
 
