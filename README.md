@@ -132,6 +132,13 @@ A person's page shows each image linked by an `OBJE` pointer, captioned by the `
 record's `TITL`, and lists other files as documents. Files are copied into the site as
 they are.
 
+**Viewing a photo.** Clicking a photo that opens the image itself, not a photo page,
+shows it nearly full screen over the page, with its title and caption below. Esc, the
+× button or a click outside the photo closes it. Buttons under it share the image's link
+(on devices with a share sheet), copy the link, or open the image in a new tab. The big
+photo on a photo page works the same way. Without JavaScript, the click opens the image
+file as before.
+
 **One person in a group photo.** A `CROP` under the person's `OBJE` link marks their
 part of a shared image. A `TITL` there adds a line under the photo's title for that
 person, and the image's alt text names them, as in "Corwin Quill in The harvest show":
