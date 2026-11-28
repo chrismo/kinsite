@@ -134,7 +134,7 @@ they are.
 
 **Viewing a photo.** Clicking a photo that opens the image itself, not a photo page,
 shows it nearly full screen over the page, with its title and caption below. Esc, the
-× button or a click outside the photo closes it. Buttons under it share the image's link
+× button or another click on the photo closes it. Buttons under it share the image's link
 (on devices with a share sheet), copy the link, or open the image in a new tab. The big
 photo on a photo page works the same way. Without JavaScript, the click opens the image
 file as before.

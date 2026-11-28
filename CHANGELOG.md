@@ -4,7 +4,7 @@
 
 - **Photos open over the page.** Clicking a photo of one person, or the big
   photo on a photo page, shows it nearly full screen without leaving the page.
-  Esc, × or a click outside it closes it. Its footer has the caption and
+  Esc, × or another click on it closes it. Its footer has the caption and
   buttons to share the image's link, copy it, or open the image in a new tab.
 
 ## 0.5.1

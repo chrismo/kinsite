@@ -562,7 +562,7 @@ test('the image dialog has a close button, the caption, and Share, Copy link and
 test('the image dialog nearly fills the screen with room for its footer, and its buttons are big enough to tap', () => {
   assert.match(CSS, /#zoom\[open\]\{display:flex;flex-direction:column\}/)
   assert.match(CSS, /#zoom\{[^}]*width:96vw;height:96vh;height:96dvh;max-width:none;max-height:none/)
-  assert.match(CSS, /#zoom img\{flex:1 1 0;min-height:0;width:100%;object-fit:scale-down\}/, 'fills the space above the footer, never blown up past its own size')
+  assert.match(CSS, /#zoom img\{flex:1 1 0;min-height:0;width:100%;object-fit:scale-down;cursor:zoom-out\}/, 'fills the space above the footer, never blown up past its own size')
   assert.match(CSS, /#zoom::backdrop\{/)
   assert.match(CSS, /#zoom \.x\{[^}]*width:40px;height:40px/)
   assert.match(CSS, /#zoom \.acts button,#zoom \.acts a\{[^}]*min-height:40px/)
@@ -593,7 +593,7 @@ function zoomPage(html, { share, clipboard, opener = 'figure' } = {}) {
 }
 const click = () => ({ preventDefault() { this.prevented = true } })
 
-test('clicking an image link opens the dialog on that image; ×, the backdrop, the new-tab link and Back each close it and focus returns', () => {
+test('clicking an image link opens the dialog on that image; the image, ×, the backdrop, the new-tab link and Back each close it and focus returns', () => {
   const { D, link, parts, win } = zoomPage(picnicSite().personPage('I5').html)
   const ev = click()
   link.h.click(ev)
@@ -603,15 +603,18 @@ test('clicking an image link opens the dialog on that image; ×, the backdrop, t
   assert.equal(parts.img.alt, 'Eli alone')
   assert.equal(parts['.cap'].innerHTML, 'The picnic<span class=cn>Eli alone</span>')
   assert.equal(parts['a.tab'].href, 'https://kin.example/fam/media/eli.png')
+  D.h.click({ target: parts['.cap'] })
+  assert.ok(D.open, 'a click in the footer leaves it open')
   D.h.click({ target: parts.img })
-  assert.ok(D.open, 'a click on the image itself leaves it open')
+  assert.ok(!D.open, 'a click on the image closes it, since the backdrop is only a thin edge')
+  assert.equal(link.focused, 1)
+  link.h.click(click())
   D.h.click({ target: D })
   assert.ok(!D.open, 'a click on the backdrop closes it')
-  assert.equal(link.focused, 1)
   link.h.click(click())
   parts['.x'].h.click({})
   assert.ok(!D.open)
-  assert.equal(link.focused, 2)
+  assert.equal(link.focused, 3)
   link.h.click(click())
   parts['a.tab'].h.click({})
   assert.ok(!D.open, 'opening the image in a new tab leaves this page without the dialog')
