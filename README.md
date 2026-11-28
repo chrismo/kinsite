@@ -130,8 +130,29 @@ warning.
 ## Photos
 
 A person's page shows each image linked by an `OBJE` pointer, captioned by the `OBJE`
-record's `TITL`, and lists other files as documents. Files are copied into the site as
-they are.
+record's `TITL`, and lists other files as documents. An `OBJE` on a family shows on both
+partners' pages. Files are copied into the site as they are, and a file byte-identical to
+one already copied is copied once.
+
+**Photos and records.** The strip at the top of the page holds photos: images whose
+`3 MEDI` (under `2 FORM`) is `PHOTO` or missing. Images of any other type (`CARD`,
+`MANUSCRIPT`, `TOMBSTONE`, …), and any image a citation links, go in a smaller Records
+gallery after the life events, since a census sheet tagged `PHOTO` is still a record. A
+link with a `CROP` counts as a photo whatever its type: it shows a face. "With photos",
+on the index and in the build log, counts photos only. Two `OBJE` records whose files are
+byte-identical show once.
+
+**Images on citations.** An `OBJE` under a citation (`3 OBJE` under `2 SOUR` on an event,
+or `2 OBJE` under `1 SOUR`) adds a `scan` link at the end of the citation, which opens the
+image like a photo; several are numbered, `scans 1 · 2`, and other files link by type,
+such as `PDF`. With `citations` off, or on an event marked `RESN PRIVACY` or
+`CONFIDENTIAL`, citation images are neither shown nor copied. With `anonymizeLiving`, an
+image a living person's citation links, or a family with a living partner links, is
+withheld from everyone, like a photo shared with a living person.
+
+The build warns about `OBJE` records that no page shows, because nothing links them or
+their file is missing: `warning: 2 OBJE records appear on no page: @O4@, @O9@`. Images
+left out on purpose, by the settings above, don't count.
 
 **Viewing a photo.** Clicking a photo that opens the image itself, not a photo page,
 shows it nearly full screen over the page, with its title and caption below. Esc, the

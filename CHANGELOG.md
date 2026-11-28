@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+- **Images on citations show up.** An `OBJE` linked from a source citation, as
+  Ancestry and RootsMagic store a record's scan, used to appear nowhere and wasn't
+  copied. Now the citation ends in a `scan` link that opens the image, and the image
+  is in the page's Records gallery. An `OBJE` on a family record shows on both
+  partners' pages. With `citations` off or on a restricted event, these images are
+  neither shown nor copied; with `anonymizeLiving`, one a living person cites is
+  withheld from everyone. (#59, #61)
+- **Photos apart from records.** The strip at the top of a person's page shows only
+  photos: `MEDI PHOTO` or no type, or a `CROP` of any image. Draft cards,
+  certificates, gravestones and anything a citation links go in a Records gallery
+  after the life events. "With photos" counts photos only. Two `OBJE` records with
+  byte-identical files show once, and the file is copied once. (#61)
+- **A warning for unseen images.** The build lists `OBJE` records that no page shows,
+  because nothing links them or their file is missing. (#61)
+
 - **More than one marriage record.** A family with several `MARR` lines used to
   keep one, made of the last one's date and place and any of their phrases. Now
   each is kept, with its own phrase. The spouse line shows the first as

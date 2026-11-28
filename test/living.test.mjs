@@ -75,6 +75,9 @@ const GED = `0 HEAD
 2 DATE 9 DEC 1911
 1 FAMS @F1@
 1 OBJE @O2@
+1 SOUR @S2@
+2 PAGE Entry 12
+2 OBJE @O3@
 0 @I2@ INDI
 1 NAME Marigold Juniper /Fernwhistle/
 1 SEX F
@@ -87,6 +90,7 @@ const GED = `0 HEAD
 3 DATA
 4 TEXT Marigold, a daughter
 3 NOTE Midwife's hand
+3 OBJE @O3@
 1 OCCU Lamplighter of Brackenmoor
 1 RESI
 2 DATE FROM 2081 TO 2090
@@ -112,6 +116,7 @@ const GED = `0 HEAD
 1 MARR
 2 DATE 5 SEP 2085
 2 PLAC Saint Larkspur chapel, Brackenmoor
+1 OBJE @O4@
 0 @O1@ OBJE
 1 FILE marigold-at-the-mill.png
 2 FORM image/png
@@ -120,14 +125,23 @@ const GED = `0 HEAD
 1 FILE orchard-picnic.png
 2 FORM image/png
 2 TITL Hollis with Juniper Wrenna in the orchard
+0 @O3@ OBJE
+1 FILE birth-roll-page.png
+2 FORM image/png
+0 @O4@ OBJE
+1 FILE chapel-steps.png
+2 FORM image/png
 0 @S1@ SOUR
 1 TITL Thistledown birth roll
+0 @S2@ SOUR
+1 TITL Vane Shire parish chest
 0 TRLR
 `
 const SECRETS = ['Marigold', 'marigold', 'Juniper', 'Female', '17 JUN 2063', '2063', 'Glimmerholt', 'Lamplighter',
   'Brackenmoor', 'Thimbleford', '2081', '2090', 'silver-backed bees', 'swarm', '555-0142',
   'marigold-at-the-mill.png', 'orchard-picnic', 'Wrenna', '5 SEP 2085', '2085', 'Larkspur', 'Tobiah', 'Quenby',
-  'lantern festival', 'Thistledown', 'Entry 88', 'a daughter', 'Midwife', 'Entry 91']
+  'lantern festival', 'Thistledown', 'Entry 88', 'a daughter', 'Midwife', 'Entry 91',
+  'birth-roll-page', 'chapel-steps']
 
 function build(anonymizeLiving) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kinsite-living-'))
@@ -135,7 +149,9 @@ function build(anonymizeLiving) {
   fs.mkdirSync(src)
   fs.writeFileSync(path.join(src, 'tree.ged'), GED)
   fs.writeFileSync(path.join(src, 'marigold-at-the-mill.png'), 'not really a png')
-  fs.writeFileSync(path.join(src, 'orchard-picnic.png'), 'not really a png')
+  fs.writeFileSync(path.join(src, 'orchard-picnic.png'), 'not really a png of the orchard')
+  fs.writeFileSync(path.join(src, 'birth-roll-page.png'), 'not really a png either')
+  fs.writeFileSync(path.join(src, 'chapel-steps.png'), 'a png, if you squint')
   buildSite({ gedcom: path.join(src, 'tree.ged'), out, mediaRoot: src, title: 'Fernwhistle', focus: 'I1', anonymizeLiving },
     { log: () => {} })
   const files = fs.readdirSync(out, { recursive: true }).sort()
@@ -148,12 +164,12 @@ function build(anonymizeLiving) {
 test('with anonymizeLiving, no output file holds a living person\'s name, dates, places, notes or media', () => {
   const plain = build(false)
   for (const s of ['Marigold', '17 JUN 2063', 'Glimmerholt', 'silver-backed bees', 'marigold-at-the-mill.png', 'orchard-picnic.png', 'Wrenna', 'Tobiah', '5 SEP 2085',
-    'lantern festival', 'Thistledown', 'Entry 88', 'a daughter', 'Midwife', 'Entry 91'])
+    'lantern festival', 'Thistledown', 'Entry 88', 'a daughter', 'Midwife', 'Entry 91', 'birth-roll-page.png', 'chapel-steps.png'])
     assert.ok(plain.text.includes(s), `control build shows ${s}`)
 
   const { files, text } = build(true)
   assert.ok(files.includes('I2.html') && files.includes('I3.html'), 'living people keep their pages')
-  assert.ok(!files.some(f => f.includes('marigold') || f.includes('orchard')), 'media not copied')
+  assert.ok(!files.some(f => /marigold|orchard|birth-roll|chapel/.test(f)), 'media not copied, cited or family media included')
   for (const s of SECRETS) assert.ok(!text.includes(s), `leaked ${s}`)
   assert.match(text, /Hollis Fernwhistle/)
   assert.match(text, /<a href="I2\.html">Private<\/a>/)
