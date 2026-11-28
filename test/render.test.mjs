@@ -130,9 +130,9 @@ test('personPage lists siblings, children and descendants by birth year, undated
   ])
   const kin = new Kin(indi, fam, 'I1')
   const { html } = new Renderer({ indi, fam, kin, copied: new Map() }).personPage('I1')
-  const names = section => html.split(section)[1].split('<h2>')[0].match(/>[A-Z][a-z]+ Zed</g).map(s => s.slice(1, -1))
-  assert.deepEqual(names('<h2>Siblings</h2>'), ['Cal Zed', 'Bay Zed', 'Dee Zed'])
-  assert.deepEqual(names('<h2>Spouse &amp; children</h2>'), ['Fen Zed', 'Eli Zed'])
+  const names = section => html.split(section)[1].split(/<h[23]>/)[0].match(/>[A-Z][a-z]+ Zed</g).map(s => s.slice(1, -1))
+  assert.deepEqual(names('<h3>Siblings</h3>'), ['Cal Zed', 'Bay Zed', 'Dee Zed'])
+  assert.deepEqual(names('<h3>Spouse &amp; children</h3>'), ['Fen Zed', 'Eli Zed'])
   assert.deepEqual(names('<h2>Descendants</h2>'), ['Fen Zed', 'Eli Zed', 'Hal Zed', 'Gus Zed'])
 })
 
@@ -144,7 +144,7 @@ test('personPage puts the chart before the photos and facts, whatever their leng
   const kin = new Kin(indi, new Map(), 'I1')
   const copied = new Map([['ash.jpg', 'photos/ash.jpg']])
   const { html } = new Renderer({ indi, fam: new Map(), kin, copied }).personPage('I1')
-  const chart = html.indexOf('<h2>Family</h2>')
+  const chart = html.indexOf('<h2>Family tree</h2>')
   assert.ok(chart > 0)
   assert.ok(html.indexOf('class="photos"') > chart)
   assert.ok(html.indexOf('class=card') > chart)
@@ -440,7 +440,7 @@ test('a repeat with nothing to show is not counted as a version', () => {
   assert.deepEqual(text([{ tag: 'DEAT', val: 'Y' }, { tag: 'DEAT', val: '', date: '1911' }]), ['Died 1911'])
   assert.deepEqual(text([{ tag: 'BIRT', val: '' }, { tag: 'BIRT', val: '', plac: '?' }]), ['Born date unknown'])
   assert.deepEqual(text([{ tag: 'DEAT', val: '', date: '1911' }, { tag: 'DEAT', val: '', notes: ['Said to be 1912'] }]),
-    ['Died 1911 preferred', ' alternate', 'Said to be 1912'])
+    ['Died 1911 preferred', ' alternate notes', 'Said to be 1912'])
 })
 
 test('event notes and citations show under their event, numbered, with contact details redacted', () => {
@@ -456,10 +456,10 @@ test('event notes and citations show under their event, numbered, with contact d
     { tag: 'OCCU', val: '', notes: [''] },
   ] })
   assert.deepEqual(evidence(html), [
-    'Died 3 MAR 1901',
+    'Died 3 MAR 1901 1 source · notes',
     'The Bible says March;\nask at [phone]',
     '[1] Quill family Bible, p. 12 — Abner Quill, d. 3rd March 1901',
-    'Buried',
+    'Buried 1 source · notes',
     '[2] Letter from [address], kept by [email]',
     'Call [phone]',
   ])
@@ -482,7 +482,7 @@ test('citations on the person and name go in a Sources list after the notes, num
   const { indi, kin } = sourced()
   const { html } = new Renderer({ indi, fam: new Map(), kin, copied: new Map() }).personPage('I1')
   assert.match(html, /\[1\]<\/span> Parish register, f\. 3/)
-  const foot = html.split('<h2>Sources</h2>')[1]
+  const foot = html.split('<h2>Sources</h2>')[1].split('</section>')[0]
   assert.ok(html.indexOf('<h2>Notes</h2>') < html.indexOf('<h2>Sources</h2>'))
   assert.deepEqual(evidence(foot.split('<footer>')[0]), ['[2] Census of 1951, Kettleby, sheet 4', '[3] Ledger, call [phone]'])
 })

@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- **Shorter person pages.** Each part of a person's page is its own section, and
+  clicking a heading folds it. Parents, spouse and children and siblings share one
+  "Close family" section, which now comes before the life events. Each event is one
+  line, such as `Residence 1920 · Kettleby ▸ 2 sources · 1 scan · notes`, that opens
+  its citations and notes in place; "Show all sources" opens them all. A page with
+  more than two sections has an outline of links to them, in the left margin on a
+  wide screen. Section ids are listed in the README. (#62)
+- **Life events in date order.** Events between births and deaths sort by year,
+  undated ones last, instead of by kind. (#62)
+
 - **Images on citations show up.** An `OBJE` linked from a source citation, as
   Ancestry and RootsMagic store a record's scan, used to appear nowhere and wasn't
   copied. Now the citation ends in a `scan` link that opens the image, and the image

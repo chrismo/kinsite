@@ -116,8 +116,8 @@ const site = (opts = {}) => {
   const copied = new Map(FILES.map(f => [f, `media/${f}`]))
   return new Renderer({ indi, fam, kin: new Kin(indi, fam, 'I1'), copied, sizes: new Map([['yearbook.jpg', { width: 100, height: 100 }]]), ...opts })
 }
-const section = (html, h2) => html.split(`<h2>${h2}</h2>`)[1]?.split('<h2>')[0] ?? ''
-const strip = html => html.match(/<div class="photos">.*?(?=<div class=card>|<h2>)/s)?.[0] ?? ''
+const section = (html, h2) => html.split(`<h2>${h2}</h2>`)[1]?.split('</section>')[0] ?? ''
+const strip = html => section(html, 'Photos')
 const imgs = html => [...html.matchAll(/<img src="media\/([^"]+)"/g)].map(m => m[1])
 
 test('the photo strip shows photos; other MEDI types and cited images go in Records, after the events', () => {
@@ -126,7 +126,7 @@ test('the photo strip shows photos; other MEDI types and cited images go in Reco
     'PHOTO, a CROP of a BOOK page, and an untyped family image are photos')
   const records = section(html, 'Records')
   assert.deepEqual(imgs(records), ['draft-card.jpg', 'census-1920.jpg', 'census-1930.jpg'])
-  assert.match(records, /^<div class="photos records">/)
+  assert.match(records, /^<\/summary><div class="photos records">/)
   assert.ok(html.indexOf('<div class=card>') < html.indexOf('<h2>Records</h2>'))
 })
 

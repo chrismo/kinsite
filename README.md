@@ -87,6 +87,22 @@ only `notes` still publishes them.
 
 Everything in `sample/` is invented: names, places, dates, numbers and addresses.
 
+## Person pages
+
+A person's page runs: family tree, photos, close family (parents, spouse and children,
+siblings), life events, records, notes, descendants, documents, sources. Each part is a
+`<section class=sec>` with a stable id (`tree`, `photos`, `kin`, `events`, `records`,
+`notes`, `descendants`, `documents`, `sources`), and a part with nothing to show is left
+out. Clicking a section's heading folds it. A page with more than two sections has an
+outline of links to them: a row under the name, or a list in the left margin on a screen
+1260px or wider, which marks the section in view. Following a link, or a `#id` in the
+address, opens a folded section.
+
+Life events run in date order: births and christenings first, deaths and burials last,
+and the rest by year between them, undated ones last. An event with citations or notes
+shows as one line ending in what it holds, such as `▸ 2 sources · 1 scan · notes`;
+clicking the line opens them in place. "Show all sources" opens every event at once.
+
 ## Facts and their sources
 
 When a GEDCOM records a birth, christening, baptism, death or burial more than once,
@@ -98,8 +114,8 @@ Life spans and the birth-year sort use the first version with a year. With
 restricted or not. A family's marriage works the same way: the spouse line shows the
 first `MARR` shown, marked preferred when there are others, with the rest under it.
 
-Under each event come its notes and citations, numbered: source title, page, and the
-quoted text of the record. Citations on the person record or on the name shown are
+Under each event, folded until opened, come its notes and citations, numbered: source
+title, page, and the quoted text of the record. Citations on the person record or on the name shown are
 listed under Sources at the foot of the page. Marriages don't show notes or citations
 yet.
 
