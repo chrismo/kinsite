@@ -514,11 +514,11 @@ test('a photo is captioned by its title, then the link\'s caption; alt text desc
   p.media = [
     { file: 'picnic.png', title: 'The picnic', caption: 'Second from the left, per Aunt Wenna', crop: { left: 250, top: 100, width: 200, height: 300 } },
     { file: 'picnic.png', title: 'The picnic', caption: 'Not placed: the back of the print doesn\'t settle which one' },
-    { file: 'picnic.png', title: 'The picnic', caption: 'The picnic' },
+    { file: 'picnic-print.png', title: 'The picnic', caption: 'The picnic' },
     { file: 'odd.png', title: '', caption: 'Ash, far right', crop: { left: 10, width: 20, height: 20 } },
   ]
   const indi = new Map([[id, p]])
-  const copied = new Map([['picnic.png', 'media/picnic.png'], ['odd.png', 'media/odd.png']])
+  const copied = new Map([['picnic.png', 'media/picnic.png'], ['picnic-print.png', 'media/picnic-print.png'], ['odd.png', 'media/odd.png']])
   const sizes = new Map([['picnic.png', { width: 1000, height: 600 }]])
   const { html } = new Renderer({ indi, fam: new Map(), kin: new Kin(indi, new Map(), 'I1'), copied, sizes }).personPage('I1')
   const figures = html.match(/<figure>.*?<\/figure>/g)

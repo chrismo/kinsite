@@ -150,9 +150,14 @@ such as `PDF`. With `citations` off, or on an event marked `RESN PRIVACY` or
 image a living person's citation links, or a family with a living partner links, is
 withheld from everyone, like a photo shared with a living person.
 
-The build warns about `OBJE` records that no page shows, because nothing links them or
-their file is missing: `warning: 2 OBJE records appear on no page: @O4@, @O9@`. Images
-left out on purpose, by the settings above, don't count.
+An image shows once on a page however many times it is linked there; only a `CROP`, a
+picture of its own, shows again.
+
+The build warns about `OBJE` records that no page shows, in two lines: those whose file
+is missing (`warning: 1 OBJE record has no file to copy: @O4@ (scans/deed.jpg)`) and
+those nothing links (`warning: 2 OBJE records are linked from nothing: @O9@, @O12@`).
+Each names the first ten and counts the rest. Images left out on purpose, by the
+settings above, don't count.
 
 **Viewing a photo.** Clicking a photo that opens the image itself, not a photo page,
 shows it nearly full screen over the page, with its title and caption below. Esc, the
