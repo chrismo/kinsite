@@ -161,13 +161,14 @@ test('a cropped photo shows just its region, linked to the whole image and capti
   const copied = new Map([['picnic.png', 'media/picnic.png'], ['odd.png', 'media/odd.png']])
   const sizes = new Map([['picnic.png', { width: 1000, height: 600 }]])
   const { html } = new Renderer({ indi, fam: new Map(), kin: new Kin(indi, new Map(), 'I1'), copied, sizes }).personPage('I1')
-  const figures = html.match(/<figure>.*?<\/figure>/g)
-  assert.equal(figures[0], '<figure><a class="crop zoom" href="media/picnic.png" style="aspect-ratio:200/300;width:min(100%,173px)">' +
-    '<img src="media/picnic.png" alt="Ash Zed in The picnic" style="width:500%;left:-125%;top:-33.333%"></a>' +
+  const figures = html.match(/<figure>.*?<\/figure>/g).map(f => f.replace(/<svg [^]*?<\/svg>/, '<svg>'))
+  const tab = '<a class=tab href="media/picnic.png" target=_blank rel=noopener aria-label="Open in new tab" title="Open in new tab"><svg></a>'
+  assert.equal(figures[0], '<figure><div class=pic style="width:min(100%,173px)"><a class="crop zoom" href="media/picnic.png" style="aspect-ratio:200/300">' +
+    `<img src="media/picnic.png" alt="Ash Zed in The picnic" style="width:500%;left:-125%;top:-33.333%"></a>${tab}</div>` +
     '<figcaption>The picnic<span class=cn>Second from left</span></figcaption></figure>')
-  assert.equal(figures[1], '<figure><a class=zoom href="media/picnic.png"><img src="media/picnic.png" alt="The picnic"></a>' +
+  assert.equal(figures[1], `<figure><div class=pic><a class=zoom href="media/picnic.png"><img src="media/picnic.png" alt="The picnic"></a>${tab}</div>` +
     '<figcaption>The picnic</figcaption></figure>')
-  assert.match(figures[2], /^<figure><a class=zoom href="media\/odd.png"><img src="media\/odd.png" alt="Unknown size"><\/a>/)
+  assert.match(figures[2], /^<figure><div class=pic><a class=zoom href="media\/odd.png"><img src="media\/odd.png" alt="Unknown size"><\/a>/)
 })
 
 const picnic = (crop, caption) => ({ obje: 'O7', file: 'picnic.png', title: 'The picnic', ...(caption && { caption }), ...(crop && { crop }) })
@@ -193,9 +194,18 @@ test('a photo gets its own page when two or more people share it, or anyone has 
 
 test("a shared photo's thumbnail links to its photo page; a photo of one person still links to the file", () => {
   const r = picnicSite()
-  assert.match(r.personPage('I1').html, /<figure><a class=crop href="O7.html" /)
-  assert.match(r.personPage('I3').html, /<figure><a href="O7.html"><img src="media\/picnic.png"/)
-  assert.match(r.personPage('I5').html, /<figure><a class=zoom href="media\/eli.png">/)
+  assert.match(r.personPage('I1').html, /<figure><div class=pic [^>]*><a class=crop href="O7.html" /)
+  assert.match(r.personPage('I3').html, /<figure><div class=pic><a href="O7.html"><img src="media\/picnic.png"/)
+  assert.match(r.personPage('I5').html, /<figure><div class=pic><a class=zoom href="media\/eli.png">/)
+})
+
+test("every thumbnail has a new-tab icon in its upper right that opens the image file, even one linking to its photo page", () => {
+  const r = picnicSite()
+  for (const [pid, file] of [['I1', 'picnic'], ['I3', 'picnic'], ['I5', 'eli']]) {
+    assert.match(r.personPage(pid).html, new RegExp(`</a><a class=tab href="media/${file}.png" target=_blank rel=noopener aria-label="Open in new tab" title="Open in new tab"><svg [^]*?</svg></a></div><figcaption>`))
+  }
+  assert.match(CSS, /\.photos \.pic\{[^}]*position:relative/)
+  assert.match(CSS, /\.photos \.tab\{position:absolute;top:6px;right:6px;/)
 })
 
 test('a photo page outlines each placed person, numbered left to right, and lists who is not yet placed', () => {
@@ -553,7 +563,8 @@ test('the image dialog has a close button, the caption, and Share, Copy link and
   assert.match(d, /<p class=cap><\/p>/)
   assert.match(d, /<button type=button class=share><svg [^]*?<\/svg>Share<\/button>/)
   assert.match(d, /<button type=button class=copy><svg [^]*?<\/svg>Copy link<\/button>/)
-  assert.match(d, /<a class=tab target=_blank rel=noopener><svg [^]*?<\/svg>Open in new tab<\/a>/)
+  assert.match(d, /<\/button><a class=tab target=_blank rel=noopener aria-label="Open in new tab" title="Open in new tab"><svg [^]*?<\/svg><\/a><img /, 'an icon beside the ×')
+  assert.doesNotMatch(d, /<\/svg>Open in new tab/)
   assert.match(d, /<input class=url readonly hidden aria-label="Link to this image">/)
   assert.match(d, /<span class=msg role=status><\/span>/)
   assert.doesNotMatch(d, /https?:|src=/)
@@ -564,8 +575,9 @@ test('the image dialog nearly fills the screen with room for its footer, and its
   assert.match(CSS, /#zoom\{[^}]*width:96vw;height:96vh;height:96dvh;max-width:none;max-height:none/)
   assert.match(CSS, /#zoom img\{flex:1 1 0;min-height:0;width:100%;object-fit:scale-down\}/, 'fills the space above the footer, never blown up past its own size')
   assert.match(CSS, /#zoom::backdrop\{/)
-  assert.match(CSS, /#zoom \.x\{[^}]*width:40px;height:40px/)
-  assert.match(CSS, /#zoom \.acts button,#zoom \.acts a\{[^}]*min-height:40px/)
+  assert.match(CSS, /#zoom \.x,#zoom \.tab\{[^}]*width:40px;height:40px/)
+  assert.match(CSS, /#zoom \.tab\{right:56px\}/)
+  assert.match(CSS, /#zoom \.acts button\{[^}]*min-height:40px/)
   assert.match(CSS, /#zoom \.cap \.cn\{display:block;font-style:italic\}/)
 })
 
@@ -591,7 +603,7 @@ function zoomPage(html, { share, clipboard, opener = 'figure' } = {}) {
     (t, f) => { win[t] = f }, nav, { href: 'https://kin.example/fam/I5.html' }, f => timers.push(f), () => {})
   return { D, link, parts, win, timers }
 }
-const click = () => ({ preventDefault() { this.prevented = true } })
+const click = (keys = {}) => ({ button: 0, ...keys, preventDefault() { this.prevented = true } })
 
 test('clicking an image link opens the dialog on that image; the image, ×, the backdrop, the new-tab link and Back each close it and focus returns', () => {
   const { D, link, parts, win } = zoomPage(picnicSite().personPage('I5').html)
@@ -621,6 +633,16 @@ test('clicking an image link opens the dialog on that image; the image, ×, the 
   link.h.click(click())
   win.pageshow()
   assert.ok(!D.open, 'a page restored by Back starts with the dialog closed')
+})
+
+test('a Cmd, Ctrl, Shift or Alt click on an image link is left to the browser, to open it in a new tab or window', () => {
+  const { D, link } = zoomPage(picnicSite().personPage('I5').html)
+  for (const key of ['metaKey', 'ctrlKey', 'shiftKey', 'altKey']) {
+    const ev = click({ [key]: true })
+    link.h.click(ev)
+    assert.ok(!ev.prevented, key)
+    assert.ok(!D.open, key)
+  }
 })
 
 test('on a photo page the dialog is captioned by the heading', () => {

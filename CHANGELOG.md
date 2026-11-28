@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- **Open a photo in a new tab.** Each photo on a person's page has a small
+  new-tab icon in its upper right that opens the whole image file, also for a
+  photo that links to its photo page. In the photo dialog, the "Open in new
+  tab" button is now an icon beside the ×. A Cmd- or Ctrl-click (or Shift or
+  Alt) on a photo opens it the browser's way instead of in the dialog.
+
 ## 0.5.2
 
 - **Photos open over the page.** Clicking a photo of one person, or the big
