@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- **More than one marriage record.** A family with several `MARR` lines used to
+  keep one, made of the last one's date and place and any of their phrases. Now
+  each is kept, with its own phrase. The spouse line shows the first as
+  preferred and the rest as alternates, the way births are shown. What's new and
+  `kinsite diff` say "Preferred marriage to … is now …" when the order changes,
+  and report an added or removed version as an added or removed marriage. (#56)
+
 ## 0.5.2
 
 - **Photos open over the page.** Clicking a photo of one person, or the big

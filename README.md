@@ -95,7 +95,8 @@ preference: the first shown is marked preferred and the rest alternates. Version
 with nothing to show, and those marked `RESN PRIVACY` or `CONFIDENTIAL`, are left out.
 Life spans and the birth-year sort use the first version with a year. With
 `anonymizeLiving`, every birth version counts toward deciding who is living,
-restricted or not.
+restricted or not. A family's marriage works the same way: the spouse line shows the
+first `MARR` shown, marked preferred when there are others, with the rest under it.
 
 Under each event come its notes and citations, numbered: source title, page, and the
 quoted text of the record. Citations on the person record or on the name shown are

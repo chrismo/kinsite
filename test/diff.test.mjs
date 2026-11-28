@@ -268,6 +268,8 @@ test('marriages: added, removed, and date or place changed', () => {
   assert.equal(changes(OLD, edit(OLD, '2 DATE 1880', '2 DATE 1881')),
     'Ada Fenwick (I1)\n  Changed date of the marriage to Jonas Pell from 1880 to 1881')
   assert.equal(changes(OLD, edit(OLD, '2 PLAC Marrowby', '2 PLAC Marrowby\n2 RESN PRIVACY')), 'No changes.')
+  assert.equal(changes(OLD, edit(OLD, '2 DATE 1880\n2 PLAC Marrowby', '2 DATE 1881\n2 PLAC Kettleby')),
+    'Ada Fenwick (I1)\n  Changed the marriage to Jonas Pell from 1880, Marrowby to 1881, Kettleby', 'an only marriage is one fact')
 })
 
 test('people added and removed, with their marriages and main parents', () => {
@@ -364,4 +366,23 @@ test('which side of the file records a parent link is not a change', () => {
   const childOnly = edit(both, '1 CHIL @I2@\n1 CHIL @I1@\n', '1 CHIL @I2@\n')
   assert.equal(changes(childOnly, edit(childOnly, '1 FAMC @F2@\n', '1 FAMC @F2@\n2 PEDI ADOPTED\n')),
     'Ada Fenwick (I1)\n  Relabeled as a child of Silas Fenwick and Hester Lowe from no label to adopted')
+})
+
+test('more than one marriage: the first is preferred, and a reorder, an added or a removed version each get a line', () => {
+  const two = edit(OLD, '2 DATE 1880\n2 PLAC Marrowby\n', '2 DATE 16 JUL 1880\n2 PLAC Marrowby\n1 MARR\n2 DATE 5 JUL 1880\n3 PHRASE (9)?\n2 PLAC Marrowby\n')
+  const swapped = edit(OLD, '2 DATE 1880\n2 PLAC Marrowby\n', '2 DATE 5 JUL 1880\n3 PHRASE (9)?\n2 PLAC Marrowby\n1 MARR\n2 DATE 16 JUL 1880\n2 PLAC Marrowby\n')
+  assert.equal(changes(swapped, two),
+    'Ada Fenwick (I1)\n  Preferred marriage to Jonas Pell is now 16 JUL 1880, Marrowby, not 5 JUL 1880 ((9)?), Marrowby')
+  assert.equal(changes(swapped, two, PUBLIC), 'Ada Fenwick (I1)\n  Preferred marriage to Jonas Pell is now 16 JUL 1880, Marrowby')
+  const one = edit(OLD, '2 DATE 1880', '2 DATE 16 JUL 1880')
+  assert.equal(changes(one, two), 'Ada Fenwick (I1)\n  Added: marriage to Jonas Pell, 5 JUL 1880 ((9)?), Marrowby')
+  assert.equal(changes(two, one), 'Ada Fenwick (I1)\n  Removed: marriage to Jonas Pell, 5 JUL 1880 ((9)?), Marrowby')
+  assert.equal(changes(two, one, PUBLIC), 'Ada Fenwick (I1)\n  Removed a record of the marriage to Jonas Pell')
+  assert.equal(changes(two, edit(two, '2 DATE 5 JUL 1880\n3 PHRASE (9)?\n', '2 DATE 6 JUL 1880\n')),
+    'Ada Fenwick (I1)\n  Changed date of the marriage to Jonas Pell from 5 JUL 1880 ((9)?) to 6 JUL 1880')
+  const hidden = edit(two, '3 PHRASE (9)?\n2 PLAC Marrowby\n', '3 PHRASE (9)?\n2 PLAC Marrowby\n2 RESN PRIVACY\n')
+  assert.equal(changes(one, hidden), 'No changes.', 'a restricted version added')
+  assert.equal(changes(hidden, one), 'No changes.', 'a restricted version removed')
+  const unwed = edit(OLD, '1 HUSB @I9@\n', '', '1 FAMS @F3@\n0 @F1@', '0 @F1@')
+  assert.equal(changes(unwed, two), 'Ada Fenwick (I1)\n  Added: marriage to Jonas Pell, 16 JUL 1880, Marrowby', 'a new couple gets one line, for the preferred marriage')
 })

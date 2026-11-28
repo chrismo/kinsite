@@ -34,8 +34,8 @@ test('anonymize swaps living people for Private stubs, keeps relationships, and 
       events: [{ tag: 'OCCU', val: 'Tinker' }], famc: 'F1', fams: ['F2'], media: [{ file: 'n.png' }], notes: ['hi'] }],
   ])
   const fam = new Map([
-    ['F1', { id: 'F1', husb: 'I1', wife: null, chil: ['I2'], marr: { date: '1870' } }],
-    ['F2', { id: 'F2', husb: 'I2', wife: null, chil: [], marr: { date: '2080', plac: 'Glimmerholt' } }],
+    ['F1', { id: 'F1', husb: 'I1', wife: null, chil: ['I2'], marrs: [{ date: '1870' }] }],
+    ['F2', { id: 'F2', husb: 'I2', wife: null, chil: [], marrs: [{ date: '2080', plac: 'Glimmerholt' }] }],
   ])
   const a = anonymize(indi, fam, 2026)
   assert.equal(a.indi.get('I1'), indi.get('I1'))
@@ -45,9 +45,9 @@ test('anonymize swaps living people for Private stubs, keeps relationships, and 
     fams: ['F2'], media: [], notes: [], sources: [],
   })
   assert.equal(a.fam.get('F1'), fam.get('F1'))
-  assert.deepEqual(a.fam.get('F2'), { id: 'F2', husb: 'I2', wife: null, chil: [], marr: {} })
+  assert.deepEqual(a.fam.get('F2'), { id: 'F2', husb: 'I2', wife: null, chil: [], marrs: [] })
   assert.equal(indi.get('I2').name, 'New Zed', 'input is not mutated')
-  assert.deepEqual(fam.get('F2').marr.plac, 'Glimmerholt')
+  assert.deepEqual(fam.get('F2').marrs[0].plac, 'Glimmerholt')
 })
 
 test('anonymize withholds media shared with a living person from everyone', () => {

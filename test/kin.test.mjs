@@ -4,7 +4,7 @@ import { Kin } from '../lib/kin.mjs'
 
 // I1 + I2 -> I3, I4 ; I3 + I5 -> I6 ; I9 unrelated
 const person = (id, famc, fams = []) => [id, { id, famc, fams }]
-const family = (id, husb, wife, chil) => [id, { id, husb, wife, chil, marr: {} }]
+const family = (id, husb, wife, chil) => [id, { id, husb, wife, chil, marrs: [] }]
 const indi = new Map([
   person('I1', null, ['F1']), person('I2', null, ['F1']), person('I3', 'F1', ['F2']),
   person('I4', 'F1'), person('I5', null, ['F2']), person('I6', 'F2'), person('I9', null),

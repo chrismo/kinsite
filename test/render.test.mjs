@@ -94,8 +94,8 @@ test('events and marriages restricted with RESN PRIVACY or CONFIDENTIAL are not 
     { tag: 'EVEN', val: '', resn: 'NOTPRIVACY', date: '1900' },
   ] }).replace(/<[^>]+>/g, ''), 'Event 1900Died 1960')
   assert.equal(when({ resn: 'PRIVACY', date: '1915' }), '1915')
-  assert.equal(r.marriageHtml({ resn: 'PRIVACY', date: '1915', plac: 'Marrowby' }), '')
-  assert.equal(r.marriageHtml({ date: '1915', plac: 'Marrowby' }), ' <span class=yr>(m. 1915 Marrowby)</span>')
+  assert.equal(r.marriageHtml([{ resn: 'PRIVACY', date: '1915', plac: 'Marrowby' }]), '')
+  assert.equal(r.marriageHtml([{ date: '1915', plac: 'Marrowby' }]), ' <span class=yr>(m. 1915 Marrowby)</span>')
 })
 
 test('a place or payload of just "?" is hidden; a birth or death with nothing to show reads date unknown, other events are dropped', () => {
@@ -107,8 +107,8 @@ test('a place or payload of just "?" is hidden; a birth or death with nothing to
   assert.equal(text('Buried', { tag: 'BURI', val: '' }), '')
   assert.equal(text('Residence', { tag: 'RESI', val: '?' }), '')
   assert.equal(text('Died', { tag: 'DEAT', val: '', plac: 'Tansy Shire, Westmarch ?' }), 'Died Tansy Shire, Westmarch ?')
-  assert.equal(r.marriageHtml({ plac: '?' }), '')
-  assert.equal(r.marriageHtml({ date: '1910', plac: '?' }), ' <span class=yr>(m. 1910)</span>')
+  assert.equal(r.marriageHtml([{ plac: '?' }]), '')
+  assert.equal(r.marriageHtml([{ date: '1910', plac: '?' }]), ' <span class=yr>(m. 1910)</span>')
 })
 
 const person = (id, giv, date, famc = null, fams = []) => [id, {
@@ -124,9 +124,9 @@ test('personPage lists siblings, children and descendants by birth year, undated
     person('I8', 'Gus', '2005', 'F3'), person('I9', 'Hal', '2001', 'F3'),
   ])
   const fam = new Map([
-    ['F1', { id: 'F1', husb: null, wife: null, chil: ['I2', 'I1', 'I4', 'I3'], marr: {} }],
-    ['F2', { id: 'F2', husb: 'I1', wife: null, chil: ['I5', 'I6'], marr: {} }],
-    ['F3', { id: 'F3', husb: 'I5', wife: null, chil: ['I8', 'I9'], marr: {} }],
+    ['F1', { id: 'F1', husb: null, wife: null, chil: ['I2', 'I1', 'I4', 'I3'], marrs: [] }],
+    ['F2', { id: 'F2', husb: 'I1', wife: null, chil: ['I5', 'I6'], marrs: [] }],
+    ['F3', { id: 'F3', husb: 'I5', wife: null, chil: ['I8', 'I9'], marrs: [] }],
   ])
   const kin = new Kin(indi, fam, 'I1')
   const { html } = new Renderer({ indi, fam, kin, copied: new Map() }).personPage('I1')
@@ -382,7 +382,7 @@ test('a living person renders as Private on their own page and wherever they are
   Object.assign(wren, { sex: 'F', notes: ['Keeps bees'], media: [{ file: 'wren.png', title: 'Wren at the mill' }] })
   wren.birt = { tag: 'BIRT', val: '', date: '2061', plac: 'Glimmerholt' }
   wren.events = [wren.birt]
-  const fam0 = new Map([['F1', { id: 'F1', husb: 'I1', wife: null, chil: ['I2'], marr: {} }]])
+  const fam0 = new Map([['F1', { id: 'F1', husb: 'I1', wife: null, chil: ['I2'], marrs: [] }]])
   const { indi, fam } = anonymize(raw, fam0, 2026)
   const kin = new Kin(indi, fam, 'I1')
   const r = new Renderer({ indi, fam, kin, copied: new Map([['wren.png', 'media/wren.png']]) })
@@ -681,4 +681,18 @@ test('Share uses the system share sheet when there is one, and copies the link o
   await new Promise(setImmediate)
   assert.deepEqual(copied, ['https://kin.example/fam/media/eli.png'])
   assert.equal(page.parts['.msg'].textContent, 'Copied')
+})
+
+test('a spouse line shows the first marriage as preferred and the rest as alternates, leaving out restricted and empty ones', () => {
+  const r = new Renderer({})
+  assert.equal(r.marriageHtml([
+    { tag: 'MARR', date: '16 JUL 1900', plac: 'Springfield' },
+    { tag: 'MARR', date: '1899', resn: 'PRIVACY' },
+    { tag: 'MARR' },
+    { tag: 'MARR', date: '5 JUL 1900', phrase: '(9)?', plac: 'Springfield' },
+  ]), ' <span class=yr>(m. 16 JUL 1900 Springfield)</span><span class=pref>preferred</span>' +
+    '<div class=yr>m. 5 JUL 1900 ((9)?) Springfield<span class=pref>alternate</span></div>')
+  assert.equal(r.marriageHtml([{ tag: 'MARR', date: '1899', resn: 'PRIVACY' }, { tag: 'MARR', date: '1900' }]),
+    ' <span class=yr>(m. 1900)</span>', 'one shown marriage needs no label')
+  assert.equal(r.marriageHtml([]), '')
 })
