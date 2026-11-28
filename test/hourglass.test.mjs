@@ -145,12 +145,12 @@ test('svg links every person box to their page, truncates long names and labels 
   assert.doesNotMatch(many, /<a href="\.html"/)
 })
 
-test('personPage puts the chart under a Family heading and indexPage uses it as the hero', () => {
+test('personPage puts the chart under a Family tree heading and indexPage uses it as the hero', () => {
   const kin = { primary: 'I1', parentsOf: () => [null, null], childrenOf: () => [], relPath: () => null }
   const full = id => ({ ...indi.get(id), surn: '', giv: '', sex: '', events: [], media: [], notes: [] })
   const r = new Renderer({ indi: new Map([...indi.keys()].map(k => [k, full(k)])), fam, kin, copied: new Map() })
   const { html } = r.personPage('I9')
-  assert.match(html, /<h2>Family<\/h2><div class="pedwrap"><svg [^>]*class="hg"/)
+  assert.match(html, /<h2>Family tree<\/h2><\/summary><div class="pedwrap"><svg [^>]*class="hg"/)
   assert.match(html, /no parents recorded/)
   assert.doesNotMatch(html, /<h2>Ancestors<\/h2>/)
   const index = r.indexPage()

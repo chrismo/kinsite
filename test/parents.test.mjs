@@ -60,7 +60,7 @@ function site(ged, { anonymizeLiving = false, year } = {}) {
   const r = new Renderer({ indi, fam, kin, copied: new Map() })
   return { indi, fam, kin, page: id => r.personPage(id).html }
 }
-const section = (html, h) => html.split(/<h2>|<footer>/).find(s => s.startsWith(h)) ?? ''
+const section = (html, h) => html.split(/<h[23]>|<footer>/).find(s => s.startsWith(h)) ?? ''
 const text = s => s.replace(/<[^>]+>/g, '').replace(/&middot;/g, '·').replace(/&uarr;/g, '↑').replace(/&#x27;/g, "'").replace(/&amp;/g, '&')
 
 test('every FAMC is kept in file order with its PEDI, PHRASE and STAT; the first not DISPROVEN is the main family', () => {
