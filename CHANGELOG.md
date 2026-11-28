@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.1
 
 - **See a group photo plain.** A photo page has a "Show outlines" box under the
   photo. It starts ticked; untick it to hide the numbered outlines, which can
