@@ -66,7 +66,7 @@ export function mergeGedcom(session, now) {
     const was = Object.hasOwn(session.base, pid) ? session.base[pid] : null
     if (!link.box || JSON.stringify(link) === JSON.stringify(was)) continue
     updated.push(pid)
-    const b = boxes.find(x => x.who === pid)
+    const b = boxes.find(x => x.who === pid && !x.guess) ?? boxes.find(x => x.who === pid)
     if (b) Object.assign(b, link.box, { caption: link.caption, guess: false })
     else boxes.push({ ...link.box, who: pid, guess: false, caption: link.caption, note: '' })
   }
@@ -99,14 +99,21 @@ export function groups(boxes, linked, names) {
     g[kind].push(i)
   })
   g.unboxed = linked.filter(pid => !boxes.some(b => b.who === pid))
+  g.also = {}
+  for (const i of [...g.placed, ...g.guessed]) {
+    const others = boxes.flatMap((b, j) => (j !== i && b.who === boxes[i].who ? [j] : []))
+    if (others.length) g.also[i] = others
+  }
+  g.twice = [...new Set(g.placed.map(i => boxes[i].who))].filter(pid => g.placed.filter(i => boxes[i].who === pid).length > 1)
   return g
 }
 
 export function linkBlocks(oid, boxes, linked, names) {
-  const blocks = []
+  const blocks = [], placed = boxes.filter(b => !b.guess && Object.hasOwn(names, b.who)).map(b => b.who)
+  const twice = [...new Set(placed.filter((pid, i) => placed.indexOf(pid) !== i))]
   let same = 0
   for (const b of boxes) {
-    if (b.guess || !Object.hasOwn(names, b.who)) continue
+    if (b.guess || !Object.hasOwn(names, b.who) || twice.includes(b.who)) continue
     const caption = b.caption.replace(/\s+/g, ' ').trim()
     const was = Object.hasOwn(linked, b.who) ? linked[b.who] : null
     if (was?.box && was.caption === caption && ['left', 'top', 'width', 'height'].every(k => was.box[k] === b[k])) {
@@ -117,7 +124,7 @@ export function linkBlocks(oid, boxes, linked, names) {
     if (caption) lines.push(`2 TITL ${caption.replace(/^@/, '@@')}`)
     blocks.push({ pid: b.who, name: names[b.who], status: was ? 'changed' : 'new', text: lines.join('\n') })
   }
-  return { blocks, same }
+  return { blocks, same, twice }
 }
 
 const sessionPath = (dir, oid) => path.join(dir, `${oid}.json`)
@@ -208,7 +215,7 @@ function photoPage(photo, data, notices) {
     '<aside id=panel><p id=empty class=sub>Draw a box, or pick one, to say who it is.</p><div id=editor hidden>' +
     `<h2>Box <span id=num></span></h2><div id=zoom><img src="${src}" alt=""></div><p id=answer></p>` +
     '<label for=find>Who is this?</label><input id=find type=search autocomplete=off placeholder="Search by name or ID"><ul id=hits></ul>' +
-    '<label class=check><input type=checkbox id=guess> This is a guess</label>' +
+    '<label class=check><input type=checkbox id=guess> This is a guess</label><p id=clash hidden></p>' +
     '<label for=caption>Caption for their link (<code>TITL</code>)</label><input id=caption type=text>' +
     '<label for=note>Notes (kept in the session file only)</label><textarea id=note></textarea>' +
     '<p><button type=button id=del>Delete box</button></p></div></aside></div>' +
@@ -352,14 +359,15 @@ function client(D, suggest, groups, linkBlocks) {
   }
 
   function showHits() {
-    const b = boxes[sel], inBox = new Map(boxes.map((x, i) => [x.who, i]))
+    const b = boxes[sel], elsewhere = id => boxes.findIndex((x, i) => i !== sel && x.who === id)
     const why = { linked: 'linked to this photo', alive: `alive in ${S.year}` }
-    const free = p => !inBox.has(p.id) || inBox.get(p.id) === sel
+    const free = p => elsewhere(p.id) < 0
+    const where = j => ` <small>${boxes[j].guess ? 'guessed' : 'placed'} in box ${j + 1}</small>`
     const found = suggest(D.people, find.value, S.year, D.linkedIds, 50)
     hits.innerHTML = [...found.filter(free), ...found.filter(p => !free(p))].slice(0, 12).map(p =>
       `<li><button type=button data-who="${h(p.id)}"${p.id === b.who ? ' class=on' : ''}>${h(p.name)}` +
       (p.life ? ` <span class=yr>${h(p.life)}</span>` : '') + (p.tier ? ` <small>${why[p.tier]}</small>` : '') +
-      (inBox.has(p.id) && inBox.get(p.id) !== sel ? ` <small>in box ${inBox.get(p.id) + 1}</small>` : '') + '</button></li>').join('') +
+      (free(p) ? '' : where(elsewhere(p.id))) + '</button></li>').join('') +
       ['not in tree', 'not sure'].map(w => `<li><button type=button data-who="${w}" class="alt${b.who === w ? ' on' : ''}">${label(w)}</button></li>`).join('')
   }
 
@@ -372,8 +380,12 @@ function client(D, suggest, groups, linkBlocks) {
     $('answer').innerHTML = isPerson(b.who)
       ? `<a href="/${h(b.who)}.html" target=_blank>${h(names[b.who])}</a>${lives[b.who] ? ` <span class=yr>(${h(lives[b.who])})</span>` : ''}`
       : `<span class=unknown>${h(label(b.who))}</span>`
+    const others = groups(boxes, D.linkedIds, names).also[sel] || [], placedElsewhere = others.filter(j => !boxes[j].guess)
     $('guess').checked = b.guess
-    $('guess').disabled = !isPerson(b.who)
+    $('guess').disabled = !isPerson(b.who) || (b.guess && placedElsewhere.length > 0)
+    $('clash').hidden = !others.length
+    $('clash').textContent = others.length ? [`${names[b.who]} is also ${others.map(j => `${boxes[j].guess ? 'guessed' : 'placed'} in Box ${j + 1}`).join(' and ')}.`,
+      !placedElsewhere.length ? '' : b.guess ? 'This box stays a guess while that one is placed.' : 'Only one box can place them: make the others guesses.'].filter(Boolean).join(' ') : ''
     setValue($('caption'), b.caption)
     setValue($('note'), b.note)
     zoom(b)
@@ -383,8 +395,9 @@ function client(D, suggest, groups, linkBlocks) {
   function showLists() {
     const g = groups(boxes, D.linkedIds, names)
     const item = i => {
-      const b = boxes[i]
+      const b = boxes[i], also = g.also[i]
       return `<li><button type=button class=pick data-i=${i}>Box ${i + 1}</button> ${h(label(b.who))}` +
+        (also ? ` <small class="also${g.twice.includes(b.who) ? ' twice' : ''}">also in ${also.map(j => `Box ${j + 1}`).join(', ')}</small>` : '') +
         (b.caption ? ` <span class=cn>${h(b.caption)}</span>` : '') + (b.note ? ` <span class=yr>&mdash; ${h(b.note)}</span>` : '') + '</li>'
     }
     const part = (title, items) => (items.length ? `<h3>${title} (${items.length})</h3><ul class=rel>${items.join('')}</ul>` : '')
@@ -402,6 +415,7 @@ function client(D, suggest, groups, linkBlocks) {
     $('paste').innerHTML = blocks.map((k, n) =>
       `<div class=block><p><b>${h(k.name)}</b> <span class=yr>under <code>0 @${h(k.pid)}@ INDI</code>, ${what[k.status]}</span> ` +
       `<button type=button class=copy data-n=${n}>Copy</button></p><pre>${h(k.text)}</pre></div>`).join('') +
+      out.twice.map(pid => `<p class=warn>${h(names[pid])} is placed in more than one box. Make all but one a guess to get their lines.</p>`).join('') +
       `<p class=sub>${blocks.length ? '' : 'Nothing new to paste. '}${same}Guesses, unknowns and notes stay in <code>${h(D.sessionFile)}</code>.</p>`
   }
 
@@ -490,6 +504,7 @@ function client(D, suggest, groups, linkBlocks) {
     const b = boxes[sel]
     b.who = btn.dataset.who
     if (!isPerson(b.who)) b.guess = false
+    else if (boxes.some((x, i) => i !== sel && x.who === b.who && !x.guess)) b.guess = true
     find.value = ''
     changed()
   })
@@ -549,8 +564,9 @@ function client(D, suggest, groups, linkBlocks) {
 const WHO_CSS = `
 .wrap{max-width:1180px}
 .hint{color:var(--mut);font-size:.9em;margin:0 0 .6em}
-.warn,.merged{border-radius:8px;padding:8px 12px;margin:.6em 0}
-.warn{background:#fff4d6;border:1px solid #e8c96a}
+.warn,.merged,#clash{border-radius:8px;padding:8px 12px;margin:.6em 0}
+.warn,#clash{background:#fff4d6;border:1px solid #e8c96a}
+.also{color:var(--mut)}.also.twice{color:#9a5b00;font-weight:600}
 .merged{background:#eef4ea;border:1px solid #c9dbbf}
 .sub input{width:4.2em;font:inherit;padding:1px 4px;border:1px solid var(--line);border-radius:4px}
 #status button{font:inherit;font-size:.9em;padding:0 6px}

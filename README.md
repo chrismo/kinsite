@@ -181,11 +181,17 @@ placed and how many are still to place. Open one to identify who's in it:
 - An answer can also be "Someone not in the tree" or "Not sure". "This is a guess"
   marks a name you aren't sure of. Each box has a caption, which becomes the link's
   `TITL`, and notes.
+- A person can be placed in only one box. Picking someone already placed in another
+  box makes the new box a guess, which stays a guess while the other box is placed.
+  That records an either/or. Each box whose person is in another box says so in the
+  lists.
 - The lists below the photo sort the boxes into placed, guessed, unknown and to place.
   People linked to the photo who have no box yet count as to place.
 - "For your GEDCOM" gives the `OBJE` link lines, with `CROP` and `TITL`, for each placed
   person whose link is new or differs from the GEDCOM. Copy them into your genealogy
-  app, or under that person's record in the file.
+  app, or under that person's record in the file. A person placed in more than one box,
+  as in a session saved by kinsite 0.5.1 or earlier, gets no lines until all but one of
+  those boxes are guesses.
 
 kinsite never writes the GEDCOM. A photo's boxes, answers and notes save as you go to
 `<OBJE id>.json` in the config's `who` folder, such as `who/O2.json`. Guesses, unknowns
@@ -193,7 +199,7 @@ and notes stay only in that file, and committing it is up to you.
 
 A new session starts from the crops already in the GEDCOM. The session also remembers
 the GEDCOM's crops as it last saw them. If you then move or add a crop in your
-genealogy app, the next visit takes the new crop for that person's box and says so.
+genealogy app, the next visit takes the new crop for that person's placed box and says so.
 Boxes you've changed and not yet pasted are kept. The session also records the
 photo's file. If the `OBJE` with that ID now names a different file, as happens when
 an app renumbers IDs on export, the page warns you and saves nothing until you

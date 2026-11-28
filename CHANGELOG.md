@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- **One person, one placed box** in `kinsite dev`'s `/who`. Picking someone
+  already placed in another box used to place them twice. Now the new box
+  becomes a guess and stays one while the other is placed. The lists mark each
+  box whose person is in another box. A person already placed twice in a saved
+  session gets no GEDCOM lines until all but one box is a guess. A crop changed
+  in the GEDCOM now moves the person's placed box rather than a guess for them.
+  (#47)
+
 ## 0.5.1
 
 - **See a group photo plain.** A photo page has a "Show outlines" box under the
