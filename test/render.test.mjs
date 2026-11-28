@@ -162,12 +162,12 @@ test('a cropped photo shows just its region, linked to the whole image and capti
   const sizes = new Map([['picnic.png', { width: 1000, height: 600 }]])
   const { html } = new Renderer({ indi, fam: new Map(), kin: new Kin(indi, new Map(), 'I1'), copied, sizes }).personPage('I1')
   const figures = html.match(/<figure>.*?<\/figure>/g)
-  assert.equal(figures[0], '<figure><a class=crop href="media/picnic.png" style="aspect-ratio:200/300;width:min(100%,173px)">' +
+  assert.equal(figures[0], '<figure><a class="crop zoom" href="media/picnic.png" style="aspect-ratio:200/300;width:min(100%,173px)">' +
     '<img src="media/picnic.png" alt="Ash Zed in The picnic" style="width:500%;left:-125%;top:-33.333%"></a>' +
     '<figcaption>The picnic<span class=cn>Second from left</span></figcaption></figure>')
-  assert.equal(figures[1], '<figure><a href="media/picnic.png"><img src="media/picnic.png" alt="The picnic"></a>' +
+  assert.equal(figures[1], '<figure><a class=zoom href="media/picnic.png"><img src="media/picnic.png" alt="The picnic"></a>' +
     '<figcaption>The picnic</figcaption></figure>')
-  assert.match(figures[2], /^<figure><a href="media\/odd.png"><img src="media\/odd.png" alt="Unknown size"><\/a>/)
+  assert.match(figures[2], /^<figure><a class=zoom href="media\/odd.png"><img src="media\/odd.png" alt="Unknown size"><\/a>/)
 })
 
 const picnic = (crop, caption) => ({ obje: 'O7', file: 'picnic.png', title: 'The picnic', ...(caption && { caption }), ...(crop && { crop }) })
@@ -195,14 +195,14 @@ test("a shared photo's thumbnail links to its photo page; a photo of one person 
   const r = picnicSite()
   assert.match(r.personPage('I1').html, /<figure><a class=crop href="O7.html" /)
   assert.match(r.personPage('I3').html, /<figure><a href="O7.html"><img src="media\/picnic.png"/)
-  assert.match(r.personPage('I5').html, /<figure><a href="media\/eli.png">/)
+  assert.match(r.personPage('I5').html, /<figure><a class=zoom href="media\/eli.png">/)
 })
 
 test('a photo page outlines each placed person, numbered left to right, and lists who is not yet placed', () => {
   const html = picnicSite().photoPage('O7')
   assert.match(html, /<title>The picnic<\/title>/)
   assert.match(html, /<h1>The picnic<\/h1>/)
-  assert.match(html, /<div class=stage><a href="media\/picnic.png"><img src="media\/picnic.png" alt="The picnic"><\/a>/)
+  assert.match(html, /<div class=stage><a class=zoom href="media\/picnic.png"><img src="media\/picnic.png" alt="The picnic"><\/a>/)
   const boxes = html.match(/<a class="who[^"]*" href="I\d.html"[^>]*>.*?<\/a>/g)
   assert.deepEqual(boxes, [
     '<a class="who" href="I2.html" style="left:10%;top:25%;width:15%;height:50%"><b>1</b><span>Bay Zed</span></a>',
@@ -529,4 +529,156 @@ test('long words such as URLs wrap instead of widening the page on a phone', () 
 test('a clicked link does not keep its hover-only label after Back; keyboard focus still shows it', () => {
   assert.doesNotMatch(CSS, /:focus\b(?!-)/)
   assert.match(CSS, /\.stage a\.who:focus-visible span[,{]/)
+})
+
+const dialogOf = html => html.match(/<dialog id=zoom[^]*?<\/dialog>/)?.[0]
+const zoomScript = html => [...html.matchAll(/<script>([^]*?)<\/script>/g)].map(m => m[1]).find(s => s.includes("'zoom'"))
+
+test('a link to an image file opens it in a dialog; links to a photo page do not, and pages without one have no dialog', () => {
+  const r = picnicSite()
+  for (const html of [r.personPage('I5').html, r.photoPage('O7')]) {
+    assert.equal(html.match(/<dialog id=zoom/g).length, 1)
+    assert.ok(zoomScript(html))
+    assert.ok(html.indexOf('<dialog id=zoom') < html.indexOf('<footer>'))
+  }
+  for (const html of [r.personPage('I1').html, r.personPage('I3').html, r.indexPage()]) {
+    assert.doesNotMatch(html, /<dialog|class="?[^>]*zoom/)
+  }
+})
+
+test('the image dialog has a close button, the caption, and Share, Copy link and new-tab controls drawn inline', () => {
+  const d = dialogOf(picnicSite().personPage('I5').html)
+  assert.match(d, /<button type=button class=x aria-label=Close title=Close><svg /)
+  assert.match(d, /<img alt="">/)
+  assert.match(d, /<p class=cap><\/p>/)
+  assert.match(d, /<button type=button class=share><svg [^]*?<\/svg>Share<\/button>/)
+  assert.match(d, /<button type=button class=copy><svg [^]*?<\/svg>Copy link<\/button>/)
+  assert.match(d, /<a class=tab target=_blank rel=noopener><svg [^]*?<\/svg>Open in new tab<\/a>/)
+  assert.match(d, /<input class=url readonly hidden aria-label="Link to this image">/)
+  assert.match(d, /<span class=msg role=status><\/span>/)
+  assert.doesNotMatch(d, /https?:|src=/)
+})
+
+test('the image dialog nearly fills the screen with room for its footer, and its buttons are big enough to tap', () => {
+  assert.match(CSS, /#zoom\[open\]\{display:flex;flex-direction:column\}/)
+  assert.match(CSS, /#zoom\{[^}]*width:96vw;height:96vh;height:96dvh;max-width:none;max-height:none/)
+  assert.match(CSS, /#zoom img\{flex:1 1 0;min-height:0;width:100%;object-fit:scale-down\}/, 'fills the space above the footer, never blown up past its own size')
+  assert.match(CSS, /#zoom::backdrop\{/)
+  assert.match(CSS, /#zoom \.x\{[^}]*width:40px;height:40px/)
+  assert.match(CSS, /#zoom \.acts button,#zoom \.acts a\{[^}]*min-height:40px/)
+  assert.match(CSS, /#zoom \.cap \.cn\{display:block;font-style:italic\}/)
+})
+
+function zoomPage(html, { share, clipboard, opener = 'figure' } = {}) {
+  const el = (props = {}) => {
+    const h = {}
+    return { h, ...props, addEventListener: (t, f) => { h[t] = f } }
+  }
+  const cap = { innerHTML: 'The picnic<span class=cn>Eli alone</span>' }
+  const link = el({ focused: 0, focus() { this.focused++ }, getAttribute: k => ({ href: 'media/eli.png' })[k],
+    querySelector: () => ({ alt: 'Eli alone' }), closest: s => (s === 'figure' && opener === 'figure' ? { querySelector: () => cap } : null) })
+  const parts = { img: el(), '.cap': el({ innerHTML: '' }), 'a.tab': el(), '.url': el({ hidden: true, selected: false, select() { this.selected = true }, focus() {} }),
+    '.msg': el({ textContent: '' }), '.share': el(), '.copy': el(), '.x': el() }
+  const D = el({ open: false, querySelector: s => parts[s],
+    showModal() { this.open = true }, close() { if (this.open) { this.open = false; this.h.close?.() } } })
+  const win = {}, nav = {}
+  if (share) nav.share = share
+  if (clipboard) nav.clipboard = clipboard
+  const timers = []
+  new Function('document', 'addEventListener', 'navigator', 'location', 'setTimeout', 'clearTimeout', zoomScript(html))(
+    { getElementById: id => (id === 'zoom' ? D : null), querySelectorAll: s => (s === 'a.zoom' ? [link] : []),
+      querySelector: s => (s === 'h1' ? { innerHTML: 'The picnic' } : null) },
+    (t, f) => { win[t] = f }, nav, { href: 'https://kin.example/fam/I5.html' }, f => timers.push(f), () => {})
+  return { D, link, parts, win, timers }
+}
+const click = () => ({ preventDefault() { this.prevented = true } })
+
+test('clicking an image link opens the dialog on that image; the image, ×, the backdrop, the new-tab link and Back each close it and focus returns', () => {
+  const { D, link, parts, win } = zoomPage(picnicSite().personPage('I5').html)
+  const ev = click()
+  link.h.click(ev)
+  assert.ok(ev.prevented)
+  assert.ok(D.open)
+  assert.equal(parts.img.src, 'https://kin.example/fam/media/eli.png')
+  assert.equal(parts.img.alt, 'Eli alone')
+  assert.equal(parts['.cap'].innerHTML, 'The picnic<span class=cn>Eli alone</span>')
+  assert.equal(parts['a.tab'].href, 'https://kin.example/fam/media/eli.png')
+  D.h.click({ target: parts['.cap'] })
+  assert.ok(D.open, 'a click in the footer leaves it open')
+  D.h.click({ target: parts.img })
+  assert.ok(!D.open, 'a click on the image closes it, since the backdrop is only a thin edge')
+  assert.equal(link.focused, 1)
+  link.h.click(click())
+  D.h.click({ target: D })
+  assert.ok(!D.open, 'a click on the backdrop closes it')
+  link.h.click(click())
+  parts['.x'].h.click({})
+  assert.ok(!D.open)
+  assert.equal(link.focused, 3)
+  link.h.click(click())
+  parts['a.tab'].h.click({})
+  assert.ok(!D.open, 'opening the image in a new tab leaves this page without the dialog')
+  link.h.click(click())
+  win.pageshow()
+  assert.ok(!D.open, 'a page restored by Back starts with the dialog closed')
+})
+
+test('on a photo page the dialog is captioned by the heading', () => {
+  const { link, parts } = zoomPage(picnicSite().photoPage('O7'), { opener: 'stage' })
+  link.h.click(click())
+  assert.equal(parts['.cap'].innerHTML, 'The picnic')
+})
+
+test('without dialog support the image link opens the file as before', () => {
+  const { D, link } = zoomPage(picnicSite().personPage('I5').html)
+  delete D.showModal
+  const ev = click()
+  link.h.click(ev)
+  assert.ok(!ev.prevented)
+  assert.ok(!D.open)
+})
+
+test('Copy link copies the absolute image URL and says so; without a clipboard it shows the link selected', async () => {
+  const html = picnicSite().personPage('I5').html
+  const copied = []
+  let page = zoomPage(html, { clipboard: { writeText: async u => { copied.push(u) } } })
+  page.link.h.click(click())
+  page.parts['.copy'].h.click({})
+  await new Promise(setImmediate)
+  assert.deepEqual(copied, ['https://kin.example/fam/media/eli.png'])
+  assert.equal(page.parts['.msg'].textContent, 'Copied')
+  assert.ok(page.parts['.url'].hidden)
+  page.timers.at(-1)()
+  assert.equal(page.parts['.msg'].textContent, '')
+
+  for (const clipboard of [undefined, { writeText: async () => { throw new Error('denied') } }]) {
+    page = zoomPage(html, { clipboard })
+    page.link.h.click(click())
+    page.parts['.copy'].h.click({})
+    await new Promise(setImmediate)
+    const url = page.parts['.url']
+    assert.equal(url.hidden, false)
+    assert.equal(url.value, 'https://kin.example/fam/media/eli.png')
+    assert.ok(url.selected)
+    page.link.h.click(click())
+    assert.ok(url.hidden, 'the fallback link is hidden again the next time the dialog opens')
+  }
+})
+
+test('Share uses the system share sheet when there is one, and copies the link otherwise', async () => {
+  const html = picnicSite().personPage('I5').html
+  const shared = []
+  let page = zoomPage(html, { share: async d => { shared.push(d) } })
+  page.link.h.click(click())
+  page.parts['.share'].h.click({})
+  await new Promise(setImmediate)
+  assert.deepEqual(shared, [{ url: 'https://kin.example/fam/media/eli.png' }])
+
+  const copied = []
+  page = zoomPage(html, { clipboard: { writeText: async u => { copied.push(u) } } })
+  page.link.h.click(click())
+  page.parts['.share'].h.click({})
+  await new Promise(setImmediate)
+  assert.deepEqual(copied, ['https://kin.example/fam/media/eli.png'])
+  assert.equal(page.parts['.msg'].textContent, 'Copied')
 })

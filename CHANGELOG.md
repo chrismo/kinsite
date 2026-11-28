@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **Photos open over the page.** Clicking a photo of one person, or the big
+  photo on a photo page, shows it nearly full screen without leaving the page.
+  Esc, × or another click on it closes it. Its footer has the caption and
+  buttons to share the image's link, copy it, or open the image in a new tab.
 - **One person, one placed box** in `kinsite dev`'s `/who`. Picking someone
   already placed in another box used to place them twice. Now the new box
   becomes a guess and stays one while the other is placed. The lists mark each
