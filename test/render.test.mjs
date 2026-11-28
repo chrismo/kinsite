@@ -485,3 +485,8 @@ test('a photo is captioned by its title, then the link\'s caption; alt text desc
 test('long words such as URLs wrap instead of widening the page on a phone', () => {
   assert.match(CSS, /\bbody\{[^}]*overflow-wrap:break-word/)
 })
+
+test('a clicked link does not keep its hover-only label after Back; keyboard focus still shows it', () => {
+  assert.doesNotMatch(CSS, /:focus\b(?!-)/)
+  assert.match(CSS, /\.stage a\.who:focus-visible span\{display:block\}/)
+})

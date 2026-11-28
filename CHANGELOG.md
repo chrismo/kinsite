@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- **A photo's name labels no longer stick after Back.** Clicking a numbered
+  outline on a photo page and then going back used to leave that person's name
+  showing until something else was clicked. Now a name shows only on hover or
+  when the outline is reached with the keyboard. The same goes for the `#` links
+  on What's new.
+
 ## 0.5.0
 
 - **Identify who's in a photo** with `kinsite dev path/to/kinsite.config.json`, at
