@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.2
 
 - **Photos open over the page.** Clicking a photo of one person, or the big
   photo on a photo page, shows it nearly full screen without leaving the page.
