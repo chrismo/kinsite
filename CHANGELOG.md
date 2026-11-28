@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.6.0
 
 - **Shorter person pages.** Each part of a person's page is its own section, and
   clicking a heading folds it. Parents, spouse and children and siblings share one
