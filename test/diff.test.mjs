@@ -269,7 +269,8 @@ test('marriages: added, removed, and date or place changed', () => {
     'Ada Fenwick (I1)\n  Changed date of the marriage to Jonas Pell from 1880 to 1881')
   assert.equal(changes(OLD, edit(OLD, '2 PLAC Marrowby', '2 PLAC Marrowby\n2 RESN PRIVACY')), 'No changes.')
   assert.equal(changes(OLD, edit(OLD, '2 DATE 1880\n2 PLAC Marrowby', '2 DATE 1881\n2 PLAC Kettleby')),
-    'Ada Fenwick (I1)\n  Changed the marriage to Jonas Pell from 1880, Marrowby to 1881, Kettleby', 'an only marriage is one fact')
+    'Ada Fenwick (I1)\n  Removed: marriage to Jonas Pell, 1880, Marrowby\n  Added: marriage to Jonas Pell, 1881, Kettleby',
+    'date and place both changed is a removal and an addition, as for any event')
 })
 
 test('people added and removed, with their marriages and main parents', () => {
@@ -385,4 +386,61 @@ test('more than one marriage: the first is preferred, and a reorder, an added or
   assert.equal(changes(hidden, one), 'No changes.', 'a restricted version removed')
   const unwed = edit(OLD, '1 HUSB @I9@\n', '', '1 FAMS @F3@\n0 @F1@', '0 @F1@')
   assert.equal(changes(unwed, two), 'Ada Fenwick (I1)\n  Added: marriage to Jonas Pell, 16 JUL 1880, Marrowby', 'a new couple gets one line, for the preferred marriage')
+})
+
+test('a marriage with nothing to show is left out of the change list, as it is on the page', () => {
+  const A = '1 MARR\n2 DATE 1880\n2 PLAC Marrowby\n', B = '1 MARR\n2 DATE 1881\n2 PLAC Kettleby\n'
+  const empty = '1 MARR\n', unknown = '1 MARR\n2 PLAC ?\n'
+  const fam = (...marrs) => edit(OLD, A, marrs.join(''))
+  assert.equal(changes(fam(A), fam(empty, A)), 'No changes.', 'an empty version added ahead of the shown one')
+  assert.equal(changes(fam(empty, A), fam(A)), 'No changes.', 'an empty version removed')
+  assert.equal(changes(fam(empty, A, B), fam(empty, B, A)),
+    'Ada Fenwick (I1)\n  Preferred marriage to Jonas Pell is now 1881, Kettleby, not 1880, Marrowby', 'the first shown version is the preferred one')
+  assert.equal(changes(fam(unknown, A), fam(unknown, B)),
+    'Ada Fenwick (I1)\n  Removed: marriage to Jonas Pell, 1880, Marrowby\n  Added: marriage to Jonas Pell, 1881, Kettleby', 'the ? version pairs with nothing')
+  const unwed = edit(OLD, '1 HUSB @I9@\n', '', '1 FAMS @F3@\n0 @F1@', '0 @F1@')
+  assert.equal(changes(edit(unwed, A, ''), fam(empty, A)),
+    'Ada Fenwick (I1)\n  Added: marriage to Jonas Pell, 1880, Marrowby', 'a new couple is described by its first shown marriage')
+})
+
+test('a version that loses or gains everything shown reads as removed or added, for marriages as for events', () => {
+  const A = '1 MARR\n2 DATE 1880\n2 PLAC Marrowby\n', fam = marr => edit(OLD, A, marr)
+  assert.equal(changes(fam(A), fam('1 MARR\n')), 'Ada Fenwick (I1)\n  Removed: marriage to Jonas Pell, 1880, Marrowby')
+  assert.equal(changes(fam('1 MARR\n2 PLAC ?\n'), fam(A)), 'Ada Fenwick (I1)\n  Added: marriage to Jonas Pell, 1880, Marrowby')
+  assert.equal(changes(fam('1 MARR\n'), fam('1 MARR\n2 PLAC ?\n')), 'No changes.', 'nothing shown either way')
+  assert.equal(changes(fam(''), fam('1 MARR\n')), 'No changes.', 'a bare marriage added')
+  const buried = '1 BURI\n2 DATE 1902\n2 PLAC Oak Hill\n'
+  assert.equal(changes(adaGets(buried), adaGets('1 BURI\n')), 'Ada Fenwick (I1)\n  Removed: burial 1902, Oak Hill')
+  assert.equal(changes(adaGets('1 BURI\n2 PLAC ?\n'), adaGets(buried)), 'Ada Fenwick (I1)\n  Added: burial 1902, Oak Hill')
+  assert.equal(changes(OLD, adaGets('1 BURI\n')), 'No changes.', 'a bare burial added: the page shows nothing for it')
+})
+
+test('a marriage version that becomes restricted gives no line, as a birth does', () => {
+  const A = '1 MARR\n2 DATE 1880\n2 PLAC Marrowby\n', B = '1 MARR\n2 DATE 1881\n2 PLAC Kettleby\n'
+  const hide = m => `${m}2 RESN PRIVACY\n`, fam = (...marrs) => edit(OLD, A, marrs.join(''))
+  assert.equal(changes(fam(A, B), fam(A, hide(B))), 'No changes.', 'the alternate')
+  assert.equal(changes(fam(A, B), fam(hide(A), B)), 'No changes.', 'the preferred')
+  assert.equal(changes(fam(A, B), fam(hide(A), hide(B))), 'No changes.', 'both')
+  assert.equal(changes(fam(A), fam(hide(A))), 'No changes.', 'the only one')
+})
+
+test('an event version with nothing to show is left out of the change list, as it is on the page', () => {
+  const born = '1 BIRT\n2 DATE 1859\n2 PLAC Marrowby\n'
+  assert.equal(changes(OLD, edit(OLD, born, `1 BIRT\n${born}`)), 'No changes.', 'an empty birth ahead of the shown one')
+  assert.equal(changes(edit(OLD, born, `1 BIRT\n${born}`), OLD), 'No changes.', 'an empty birth removed')
+  assert.equal(changes(OLD, edit(OLD, born, `1 BIRT Y\n${born}`)), 'No changes.', 'a birth that says only Y')
+  const died = '1 DEAT\n2 DATE 1900\n2 PLAC Marrowby\n'
+  assert.equal(changes(adaGets(died), adaGets(`1 DEAT\n2 PLAC ?\n${died}`)), 'No changes.', 'a death whose place is ?')
+  const lived = '1 RESI\n2 DATE 1880\n2 PLAC Marrowby\n'
+  assert.equal(changes(adaGets(lived), adaGets(`1 RESI\n2 PLAC 12 Lantern Ave\n${lived}`)), 'No changes.', 'a residence with only a street address')
+  assert.equal(changes(OLD, adaGets('1 DEAT\n')), 'Ada Fenwick (I1)\n  Added: death', 'a lone bare death still shows, as "date unknown"')
+})
+
+test('a version with only a note still counts: its notes are compared, and it can be preferred', () => {
+  const born = '1 BIRT\n2 DATE 1859\n2 PLAC Marrowby\n', noted = n => `1 BIRT\n2 NOTE ${n}\n`
+  const old = edit(OLD, born, born + noted('Born at the mill'))
+  assert.equal(changes(old, edit(OLD, born, born + noted('Born at the forge'))),
+    'Ada Fenwick (I1)\n  Changed a note on the birth to “Born at the forge”')
+  assert.equal(changes(old, edit(OLD, born, noted('Born at the mill') + born)),
+    'Ada Fenwick (I1)\n  Preferred birth is now one with no date or place, not 1859, Marrowby')
 })

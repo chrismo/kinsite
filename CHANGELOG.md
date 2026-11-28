@@ -6,8 +6,20 @@
   keep one, made of the last one's date and place and any of their phrases. Now
   each is kept, with its own phrase. The spouse line shows the first as
   preferred and the rest as alternates, the way births are shown. What's new and
-  `kinsite diff` say "Preferred marriage to … is now …" when the order changes,
-  and report an added or removed version as an added or removed marriage. (#56)
+  `kinsite diff` compare marriage versions the way they compare other events: "Preferred
+  marriage to … is now …" when the order changes, and an added or removed
+  version reads as an added or removed marriage. A marriage whose date and place
+  both changed now reads as one removal and one addition, as a burial does,
+  instead of one change. (#56)
+- **The change list skips versions the page doesn't show.** An empty birth,
+  death or residence next to a dated one, or one with only a street address or a
+  place of `?`, used to read as "Added: death" and a broken "Preferred death is
+  now , not …". A bare burial, christening or other event with nothing to show
+  read as "Added: burial", though the page showed nothing. The page and the
+  change list now use one rule for which versions count. A bare birth or death
+  still counts, since the page shows it as "date unknown". A version with only a
+  note or citation still counts too, and when it becomes preferred the line
+  reads "one with no date or place".
 
 ## 0.5.2
 
